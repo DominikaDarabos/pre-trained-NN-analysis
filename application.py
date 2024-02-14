@@ -43,6 +43,7 @@ class MyQtApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
 
     def add_project(self, project, name):
         self.projects[name] = project
+        #
 
 
 class NewModelDialog(QtWidgets.QDialog):
