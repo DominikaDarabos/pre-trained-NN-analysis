@@ -16,30 +16,23 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDialog,
-    QFrame, QGridLayout, QHBoxLayout, QLabel,
-    QLineEdit, QPushButton, QSizePolicy, QSpacerItem,
-    QToolButton, QVBoxLayout, QWidget)
+    QFrame, QGridLayout, QHBoxLayout, QLineEdit,
+    QPushButton, QSizePolicy, QToolButton, QVBoxLayout,
+    QWidget)
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         if not Dialog.objectName():
             Dialog.setObjectName(u"Dialog")
-        Dialog.resize(759, 435)
+        Dialog.resize(759, 447)
         self.gridLayout_2 = QGridLayout(Dialog)
         self.gridLayout_2.setObjectName(u"gridLayout_2")
         self.baseFrame = QFrame(Dialog)
         self.baseFrame.setObjectName(u"baseFrame")
         self.baseFrame.setFrameShape(QFrame.StyledPanel)
         self.baseFrame.setFrameShadow(QFrame.Raised)
-        self.gridLayout = QGridLayout(self.baseFrame)
-        self.gridLayout.setObjectName(u"gridLayout")
-        self.SelectAnalyzersLabel = QLabel(self.baseFrame)
-        self.SelectAnalyzersLabel.setObjectName(u"SelectAnalyzersLabel")
-        self.SelectAnalyzersLabel.setMaximumSize(QSize(16777215, 30))
-        self.SelectAnalyzersLabel.setTextFormat(Qt.PlainText)
-
-        self.gridLayout.addWidget(self.SelectAnalyzersLabel, 1, 0, 1, 1)
-
+        self.verticalLayout_4 = QVBoxLayout(self.baseFrame)
+        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
         self.modelSelectorLayout = QHBoxLayout()
         self.modelSelectorLayout.setObjectName(u"modelSelectorLayout")
         self.selectModelLine = QLineEdit(self.baseFrame)
@@ -53,7 +46,37 @@ class Ui_Dialog(object):
         self.modelSelectorLayout.addWidget(self.selectModelButton)
 
 
-        self.gridLayout.addLayout(self.modelSelectorLayout, 0, 0, 1, 1)
+        self.verticalLayout_4.addLayout(self.modelSelectorLayout)
+
+        self.modelSelectorLayout_2 = QHBoxLayout()
+        self.modelSelectorLayout_2.setObjectName(u"modelSelectorLayout_2")
+        self.selectCustomLine = QLineEdit(self.baseFrame)
+        self.selectCustomLine.setObjectName(u"selectCustomLine")
+
+        self.modelSelectorLayout_2.addWidget(self.selectCustomLine)
+
+        self.selectCustomButton = QToolButton(self.baseFrame)
+        self.selectCustomButton.setObjectName(u"selectCustomButton")
+
+        self.modelSelectorLayout_2.addWidget(self.selectCustomButton)
+
+
+        self.verticalLayout_4.addLayout(self.modelSelectorLayout_2)
+
+        self.modelSelectorLayout_3 = QHBoxLayout()
+        self.modelSelectorLayout_3.setObjectName(u"modelSelectorLayout_3")
+        self.selectInputLine = QLineEdit(self.baseFrame)
+        self.selectInputLine.setObjectName(u"selectInputLine")
+
+        self.modelSelectorLayout_3.addWidget(self.selectInputLine)
+
+        self.selectInputButton = QToolButton(self.baseFrame)
+        self.selectInputButton.setObjectName(u"selectInputButton")
+
+        self.modelSelectorLayout_3.addWidget(self.selectInputButton)
+
+
+        self.verticalLayout_4.addLayout(self.modelSelectorLayout_3)
 
         self.analyzersFrame = QFrame(self.baseFrame)
         self.analyzersFrame.setObjectName(u"analyzersFrame")
@@ -66,106 +89,119 @@ class Ui_Dialog(object):
         self.analyzerCheckboxFrame.setObjectName(u"analyzerCheckboxFrame")
         self.analyzerCheckboxFrame.setFrameShape(QFrame.StyledPanel)
         self.analyzerCheckboxFrame.setFrameShadow(QFrame.Raised)
-        self.verticalLayout = QVBoxLayout(self.analyzerCheckboxFrame)
-        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.gridLayout_4 = QGridLayout(self.analyzerCheckboxFrame)
+        self.gridLayout_4.setObjectName(u"gridLayout_4")
+        self.horizontalLayout = QHBoxLayout()
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.checkBox_IG = QCheckBox(self.analyzerCheckboxFrame)
         self.checkBox_IG.setObjectName(u"checkBox_IG")
+        self.checkBox_IG.setMinimumSize(QSize(350, 0))
+        self.checkBox_IG.setMaximumSize(QSize(350, 16777215))
 
-        self.verticalLayout.addWidget(self.checkBox_IG)
+        self.horizontalLayout.addWidget(self.checkBox_IG)
 
-        self.checkBox_LRP_Z = QCheckBox(self.analyzerCheckboxFrame)
-        self.checkBox_LRP_Z.setObjectName(u"checkBox_LRP_Z")
-
-        self.verticalLayout.addWidget(self.checkBox_LRP_Z)
-
-        self.checkBox_LRP_AB = QCheckBox(self.analyzerCheckboxFrame)
-        self.checkBox_LRP_AB.setObjectName(u"checkBox_LRP_AB")
-
-        self.verticalLayout.addWidget(self.checkBox_LRP_AB)
-
-        self.checkBox_LRP_Epsilon = QCheckBox(self.analyzerCheckboxFrame)
-        self.checkBox_LRP_Epsilon.setObjectName(u"checkBox_LRP_Epsilon")
-
-        self.verticalLayout.addWidget(self.checkBox_LRP_Epsilon)
-
-
-        self.horizontalLayout_2.addWidget(self.analyzerCheckboxFrame)
-
-        self.neuronSelectionFrame = QFrame(self.analyzersFrame)
-        self.neuronSelectionFrame.setObjectName(u"neuronSelectionFrame")
-        self.neuronSelectionFrame.setFrameShape(QFrame.StyledPanel)
-        self.neuronSelectionFrame.setFrameShadow(QFrame.Raised)
-        self.verticalLayout_2 = QVBoxLayout(self.neuronSelectionFrame)
-        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.comboBox_IG = QComboBox(self.neuronSelectionFrame)
+        self.comboBox_IG = QComboBox(self.analyzerCheckboxFrame)
         self.comboBox_IG.addItem("")
         self.comboBox_IG.addItem("")
         self.comboBox_IG.addItem("")
         self.comboBox_IG.setObjectName(u"comboBox_IG")
+        self.comboBox_IG.setMinimumSize(QSize(100, 0))
 
-        self.verticalLayout_2.addWidget(self.comboBox_IG)
+        self.horizontalLayout.addWidget(self.comboBox_IG)
 
-        self.comboBox_LRP_Z = QComboBox(self.neuronSelectionFrame)
+
+        self.gridLayout_4.addLayout(self.horizontalLayout, 0, 0, 1, 1)
+
+        self.horizontalLayout_3 = QHBoxLayout()
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.checkBox_LRP_Z = QCheckBox(self.analyzerCheckboxFrame)
+        self.checkBox_LRP_Z.setObjectName(u"checkBox_LRP_Z")
+        self.checkBox_LRP_Z.setMinimumSize(QSize(350, 0))
+        self.checkBox_LRP_Z.setMaximumSize(QSize(350, 16777215))
+
+        self.horizontalLayout_3.addWidget(self.checkBox_LRP_Z)
+
+        self.comboBox_LRP_Z = QComboBox(self.analyzerCheckboxFrame)
         self.comboBox_LRP_Z.addItem("")
         self.comboBox_LRP_Z.addItem("")
         self.comboBox_LRP_Z.addItem("")
         self.comboBox_LRP_Z.setObjectName(u"comboBox_LRP_Z")
+        self.comboBox_LRP_Z.setMinimumSize(QSize(100, 0))
 
-        self.verticalLayout_2.addWidget(self.comboBox_LRP_Z)
+        self.horizontalLayout_3.addWidget(self.comboBox_LRP_Z)
 
-        self.comboBox_LRP_AB = QComboBox(self.neuronSelectionFrame)
+
+        self.gridLayout_4.addLayout(self.horizontalLayout_3, 1, 0, 1, 1)
+
+        self.gridLayout = QGridLayout()
+        self.gridLayout.setObjectName(u"gridLayout")
+        self.checkBox_LRP_AB = QCheckBox(self.analyzerCheckboxFrame)
+        self.checkBox_LRP_AB.setObjectName(u"checkBox_LRP_AB")
+        self.checkBox_LRP_AB.setMinimumSize(QSize(350, 0))
+        self.checkBox_LRP_AB.setMaximumSize(QSize(350, 16777215))
+
+        self.gridLayout.addWidget(self.checkBox_LRP_AB, 0, 0, 1, 1)
+
+        self.comboBox_LRP_AB = QComboBox(self.analyzerCheckboxFrame)
         self.comboBox_LRP_AB.addItem("")
         self.comboBox_LRP_AB.addItem("")
         self.comboBox_LRP_AB.addItem("")
         self.comboBox_LRP_AB.setObjectName(u"comboBox_LRP_AB")
+        self.comboBox_LRP_AB.setMinimumSize(QSize(100, 0))
 
-        self.verticalLayout_2.addWidget(self.comboBox_LRP_AB)
+        self.gridLayout.addWidget(self.comboBox_LRP_AB, 0, 1, 1, 1)
 
-        self.comboBox_LRP_Epsilon = QComboBox(self.neuronSelectionFrame)
+        self.AlphaBetaComboBox = QComboBox(self.analyzerCheckboxFrame)
+        self.AlphaBetaComboBox.addItem("")
+        self.AlphaBetaComboBox.addItem("")
+        self.AlphaBetaComboBox.setObjectName(u"AlphaBetaComboBox")
+        self.AlphaBetaComboBox.setMinimumSize(QSize(150, 0))
+        self.AlphaBetaComboBox.setMaximumSize(QSize(150, 16777215))
+
+        self.gridLayout.addWidget(self.AlphaBetaComboBox, 0, 2, 1, 1)
+
+
+        self.gridLayout_4.addLayout(self.gridLayout, 2, 0, 1, 1)
+
+        self.gridLayout_3 = QGridLayout()
+        self.gridLayout_3.setObjectName(u"gridLayout_3")
+        self.checkBox_LRP_Epsilon = QCheckBox(self.analyzerCheckboxFrame)
+        self.checkBox_LRP_Epsilon.setObjectName(u"checkBox_LRP_Epsilon")
+        self.checkBox_LRP_Epsilon.setMinimumSize(QSize(350, 0))
+        self.checkBox_LRP_Epsilon.setMaximumSize(QSize(350, 16777215))
+
+        self.gridLayout_3.addWidget(self.checkBox_LRP_Epsilon, 0, 0, 1, 1)
+
+        self.comboBox_LRP_Epsilon = QComboBox(self.analyzerCheckboxFrame)
         self.comboBox_LRP_Epsilon.addItem("")
         self.comboBox_LRP_Epsilon.addItem("")
         self.comboBox_LRP_Epsilon.addItem("")
         self.comboBox_LRP_Epsilon.setObjectName(u"comboBox_LRP_Epsilon")
+        self.comboBox_LRP_Epsilon.setMinimumSize(QSize(100, 0))
 
-        self.verticalLayout_2.addWidget(self.comboBox_LRP_Epsilon)
+        self.gridLayout_3.addWidget(self.comboBox_LRP_Epsilon, 0, 1, 1, 1)
 
-
-        self.horizontalLayout_2.addWidget(self.neuronSelectionFrame)
-
-        self.paramsFrame = QFrame(self.analyzersFrame)
-        self.paramsFrame.setObjectName(u"paramsFrame")
-        self.paramsFrame.setMaximumSize(QSize(150, 16777215))
-        self.paramsFrame.setFrameShape(QFrame.StyledPanel)
-        self.paramsFrame.setFrameShadow(QFrame.Raised)
-        self.verticalLayout_3 = QVBoxLayout(self.paramsFrame)
-        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.IG_Z_spacer = QSpacerItem(20, 70, QSizePolicy.Minimum, QSizePolicy.Maximum)
-
-        self.verticalLayout_3.addItem(self.IG_Z_spacer)
-
-        self.EpsilonInput = QLineEdit(self.paramsFrame)
+        self.EpsilonInput = QLineEdit(self.analyzerCheckboxFrame)
         self.EpsilonInput.setObjectName(u"EpsilonInput")
+        self.EpsilonInput.setMinimumSize(QSize(150, 0))
+        self.EpsilonInput.setMaximumSize(QSize(150, 16777215))
 
-        self.verticalLayout_3.addWidget(self.EpsilonInput)
-
-        self.AlphaBetaComboBox = QComboBox(self.paramsFrame)
-        self.AlphaBetaComboBox.addItem("")
-        self.AlphaBetaComboBox.addItem("")
-        self.AlphaBetaComboBox.setObjectName(u"AlphaBetaComboBox")
-
-        self.verticalLayout_3.addWidget(self.AlphaBetaComboBox)
+        self.gridLayout_3.addWidget(self.EpsilonInput, 0, 2, 1, 1)
 
 
-        self.horizontalLayout_2.addWidget(self.paramsFrame)
+        self.gridLayout_4.addLayout(self.gridLayout_3, 3, 0, 1, 1)
 
 
-        self.gridLayout.addWidget(self.analyzersFrame, 2, 0, 1, 1)
+        self.horizontalLayout_2.addWidget(self.analyzerCheckboxFrame)
+
+
+        self.verticalLayout_4.addWidget(self.analyzersFrame)
 
         self.createButton = QPushButton(self.baseFrame)
         self.createButton.setObjectName(u"createButton")
         self.createButton.setMinimumSize(QSize(0, 40))
 
-        self.gridLayout.addWidget(self.createButton, 3, 0, 1, 1)
+        self.verticalLayout_4.addWidget(self.createButton)
 
 
         self.gridLayout_2.addWidget(self.baseFrame, 0, 0, 1, 1)
@@ -178,33 +214,36 @@ class Ui_Dialog(object):
 
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(QCoreApplication.translate("Dialog", u"Dialog", None))
-        self.SelectAnalyzersLabel.setText(QCoreApplication.translate("Dialog", u"Select analyzers", None))
         self.selectModelLine.setText(QCoreApplication.translate("Dialog", u"Select model", None))
         self.selectModelButton.setText(QCoreApplication.translate("Dialog", u"...", None))
+        self.selectCustomLine.setText(QCoreApplication.translate("Dialog", u"Select custom object python file", None))
+        self.selectCustomButton.setText(QCoreApplication.translate("Dialog", u"...", None))
+        self.selectInputLine.setText(QCoreApplication.translate("Dialog", u"Select input file", None))
+        self.selectInputButton.setText(QCoreApplication.translate("Dialog", u"...", None))
         self.checkBox_IG.setText(QCoreApplication.translate("Dialog", u"Integrated Gradients", None))
-        self.checkBox_LRP_Z.setText(QCoreApplication.translate("Dialog", u"Layer-wise relevance propagation - Z", None))
-        self.checkBox_LRP_AB.setText(QCoreApplication.translate("Dialog", u"Layer-wise relevance propagation - ALPHA - BETA", None))
-        self.checkBox_LRP_Epsilon.setText(QCoreApplication.translate("Dialog", u"Layer-wise relevance propagation - EPSILON", None))
         self.comboBox_IG.setItemText(0, QCoreApplication.translate("Dialog", u"None", None))
         self.comboBox_IG.setItemText(1, QCoreApplication.translate("Dialog", u"Max activation", None))
         self.comboBox_IG.setItemText(2, QCoreApplication.translate("Dialog", u"Index", None))
 
+        self.checkBox_LRP_Z.setText(QCoreApplication.translate("Dialog", u"Layer-wise relevance propagation - Z", None))
         self.comboBox_LRP_Z.setItemText(0, QCoreApplication.translate("Dialog", u"None", None))
         self.comboBox_LRP_Z.setItemText(1, QCoreApplication.translate("Dialog", u"Max activation", None))
         self.comboBox_LRP_Z.setItemText(2, QCoreApplication.translate("Dialog", u"Index", None))
 
+        self.checkBox_LRP_AB.setText(QCoreApplication.translate("Dialog", u"Layer-wise relevance propagation - ALPHA - BETA", None))
         self.comboBox_LRP_AB.setItemText(0, QCoreApplication.translate("Dialog", u"None", None))
         self.comboBox_LRP_AB.setItemText(1, QCoreApplication.translate("Dialog", u"Max activation", None))
         self.comboBox_LRP_AB.setItemText(2, QCoreApplication.translate("Dialog", u"Index", None))
 
+        self.AlphaBetaComboBox.setItemText(0, QCoreApplication.translate("Dialog", u"Alpha_2, Beta_1", None))
+        self.AlphaBetaComboBox.setItemText(1, QCoreApplication.translate("Dialog", u"Alpha_1, Beta_0", None))
+
+        self.checkBox_LRP_Epsilon.setText(QCoreApplication.translate("Dialog", u"Layer-wise relevance propagation - EPSILON", None))
         self.comboBox_LRP_Epsilon.setItemText(0, QCoreApplication.translate("Dialog", u"None", None))
         self.comboBox_LRP_Epsilon.setItemText(1, QCoreApplication.translate("Dialog", u"Max activation", None))
         self.comboBox_LRP_Epsilon.setItemText(2, QCoreApplication.translate("Dialog", u"Index", None))
 
         self.EpsilonInput.setPlaceholderText(QCoreApplication.translate("Dialog", u"epsilon", None))
-        self.AlphaBetaComboBox.setItemText(0, QCoreApplication.translate("Dialog", u"Alpha_2, Beta_1", None))
-        self.AlphaBetaComboBox.setItemText(1, QCoreApplication.translate("Dialog", u"Alpha_1, Beta_0", None))
-
         self.createButton.setText(QCoreApplication.translate("Dialog", u"Create Project", None))
     # retranslateUi
 
