@@ -2,7 +2,7 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 
 from utils import main, new_model
-import sys, os
+import sys, os, re
 
 def apply_stylesheet(app):
     script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -30,8 +30,9 @@ class MyQtApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
 
     # add elements to side menu bar
     def populate_list_widget(self):
-        sideMenuElements = [analyzer for analyzer, boolean in self.projects["first"].checkbox_states.items() if boolean]
+        sideMenuElements = [analyzer for analyzer, values in self.projects["first"].config["analyzers"].items() if values["checked"]]
         self.listWidget.addItems(sideMenuElements)
+        print(self.projects["first"].config)
 
     def set_shadow_effect(self, enabled=True):
         if enabled:
@@ -70,16 +71,10 @@ class NewModelDialog(QtWidgets.QDialog):
         self.hide()  # Hide the dialog
         #self.main_window.showMaximized()  # Show the main window
         self.app.set_shadow_effect(enabled=False)
-        self.collect_selected_analyzers()
         project = Project()
-        project.set_model_file = self.model_file_path
-        project.set_custom_file = self.custom_object_file_path
-        project.set_input_file = self.input_file_path
-        project.checkbox_states = self.checkbox_states
-        project.combo_box_values = self.combo_box_values
+        self.collect_selected_analyzers(project)
 
         self.app.add_project(project, "first")
-        print(self.app.projects["first"].checkbox_states)
         self.app.populate_list_widget()
         
     
@@ -107,42 +102,73 @@ class NewModelDialog(QtWidgets.QDialog):
             self.input_file_path = file
             self.ui.selectInputLine.setText(file)
     
-    def collect_selected_analyzers(self):
+    def collect_selected_analyzers(self, project):
+        project.set_model_file = self.model_file_path
+        project.set_custom_file = self.custom_object_file_path
+        project.set_input_file = self.input_file_path
+
         # Get checked state of checkboxes
-        self.checkbox_states = {
-            "IG": self.ui.checkBox_IG.isChecked(),
-            "LRP_Z": self.ui.checkBox_LRP_Z.isChecked(),
-            "LRP_AB": self.ui.checkBox_LRP_AB.isChecked(),
-            "LRP_Epsilon": self.ui.checkBox_LRP_Epsilon.isChecked()
-        }
+        project.config["analyzers"]["IG"]["checked"]            = self.ui.checkBox_IG.isChecked()
+        project.config["analyzers"]["LRP_Z"]["checked"]         = self.ui.checkBox_LRP_Z.isChecked()
+        project.config["analyzers"]["LRP_AB"]["checked"]        = self.ui.checkBox_LRP_AB.isChecked()
+        project.config["analyzers"]["LRP_Epsilon"]["checked"]   = self.ui.checkBox_LRP_Epsilon.isChecked()
 
-        # Get selected items from combo boxes
-        self.combo_box_values = {
-            "IG": self.ui.comboBox_IG.currentText(),
-            "LRP_Z": self.ui.comboBox_LRP_Z.currentText(),
-            "LRP_AB": self.ui.comboBox_LRP_AB.currentText(),
-            "LRP_Epsilon": self.ui.comboBox_LRP_Epsilon.currentText()
-        }
+        project.config["analyzers"]["IG"]["activation"]             = self.ui.comboBox_IG.currentText()
+        project.config["analyzers"]["LRP_Z"]["activation"]          = self.ui.comboBox_LRP_Z.currentText()
+        project.config["analyzers"]["LRP_AB"]["activation"]         = self.ui.comboBox_LRP_AB.currentText()
+        project.config["analyzers"]["LRP_Epsilon"]["activation"]    = self.ui.comboBox_LRP_Epsilon.currentText()
 
-        print("Checkbox states:", self.checkbox_states)
-        print("Combo box values:", self.combo_box_values)
+        alphaBetaString = self.ui.AlphaBetaComboBox.currentText()
+        numbers_as_strings = re.findall(r'\d+', alphaBetaString)
+        numbers_as_integers = [int(num_str) for num_str in numbers_as_strings]
+        project.config["analyzers"]["LRP_AB"]["alpha"] = numbers_as_integers[0]
+        project.config["analyzers"]["LRP_AB"]["beta"] = numbers_as_integers[1]
+
+        project.config["analyzers"]["LRP_Epsilon"]["epsilon"] = float(self.ui.EpsilonInput.text())
+
 
 class Project():
     def __init__(self):
         self.model_file_path = None
         self.custom_object_file_path = None
         self.input_file_path = None
-        self.checkbox_states = {}
-        self.combo_box_values = {}
+        self.config = {
+            "files":{
+                "model_path": "",
+                "custom_object_path": "",
+                "data_path": ""
+            },
+            "analyzers": {
+                "IG": {
+                    "checked": False,
+                    "activation": None
+                },
+                "LRP_Z": {
+                    "checked": False,
+                    "activation": None
+                },
+                "LRP_AB": {
+                    "checked": False,
+                    "activation": None,
+                    "alpa": False,
+                    "beta": None
+                },
+                "LRP_Epsilon": {
+                    "checked": False,
+                    "activation": None,
+                    "epsilon": None
+                }
+            }
+        }
 
     def set_model_file(self, path):
-        self.model_file_path = path
+        self.config["files"]["model_path"] = path
 
     def set_input_file(self, path):
-        self.input_file_path = path
+        self.config["files"]["data_path"] = path
 
     def set_custom_file(self, path):
-        self.model_custom_path = path
+        self.config["files"]["custom_object_path"] = path
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication()
