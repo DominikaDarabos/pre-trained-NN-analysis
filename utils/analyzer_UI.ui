@@ -571,8 +571,8 @@ p, li { white-space: pre-wrap; }
              <property name="frameShadow">
               <enum>QFrame::Raised</enum>
              </property>
-             <layout class="QVBoxLayout" name="verticalLayout_12">
-              <item>
+             <layout class="QGridLayout" name="gridLayout_10">
+              <item row="0" column="0">
                <widget class="QTabWidget" name="upperPlotTabWidget">
                 <property name="currentIndex">
                  <number>0</number>
@@ -722,14 +722,14 @@ p, li { white-space: pre-wrap; }
                 </widget>
                </widget>
               </item>
-              <item alignment="Qt::AlignRight">
+              <item row="1" column="0" alignment="Qt::AlignRight">
                <widget class="QPushButton" name="upper_new_plot_button">
                 <property name="text">
                  <string>+</string>
                 </property>
                </widget>
               </item>
-              <item>
+              <item row="2" column="0">
                <widget class="QTabWidget" name="bottomPlotTabWidget">
                 <property name="currentIndex">
                  <number>1</number>
@@ -992,7 +992,7 @@ p, li { white-space: pre-wrap; }
                 </widget>
                </widget>
               </item>
-              <item alignment="Qt::AlignRight">
+              <item row="3" column="0" alignment="Qt::AlignRight">
                <widget class="QPushButton" name="bottom_new_plot_button">
                 <property name="text">
                  <string>+</string>
