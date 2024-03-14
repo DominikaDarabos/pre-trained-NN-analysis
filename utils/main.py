@@ -15,17 +15,17 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QGraphicsView,
-    QGridLayout, QHBoxLayout, QLabel, QListWidget,
-    QListWidgetItem, QMainWindow, QPushButton, QSizePolicy,
-    QStatusBar, QTabWidget, QTextBrowser, QVBoxLayout,
-    QWidget)
+from PySide6.QtWidgets import (QApplication, QFrame, QGraphicsView, QGridLayout,
+    QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
+    QMainWindow, QPushButton, QSizePolicy, QStatusBar,
+    QTabWidget, QTextBrowser, QVBoxLayout, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1133, 785)
+        MainWindow.resize(1357, 785)
+        MainWindow.setTabShape(QTabWidget.Rounded)
         self.baseWidget = QWidget(MainWindow)
         self.baseWidget.setObjectName(u"baseWidget")
         self.gridLayout = QGridLayout(self.baseWidget)
@@ -41,8 +41,8 @@ class Ui_MainWindow(object):
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
         self.sideMenuFrame = QFrame(self.baseFrame)
         self.sideMenuFrame.setObjectName(u"sideMenuFrame")
-        self.sideMenuFrame.setMinimumSize(QSize(150, 0))
-        self.sideMenuFrame.setMaximumSize(QSize(250, 16777215))
+        self.sideMenuFrame.setMinimumSize(QSize(100, 0))
+        self.sideMenuFrame.setMaximumSize(QSize(100, 16777215))
         self.sideMenuFrame.setFrameShape(QFrame.StyledPanel)
         self.sideMenuFrame.setFrameShadow(QFrame.Raised)
         self.verticalLayout = QVBoxLayout(self.sideMenuFrame)
@@ -51,8 +51,8 @@ class Ui_MainWindow(object):
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.menuButton = QPushButton(self.sideMenuFrame)
         self.menuButton.setObjectName(u"menuButton")
-        self.menuButton.setMinimumSize(QSize(150, 0))
-        self.menuButton.setMaximumSize(QSize(250, 25))
+        self.menuButton.setMinimumSize(QSize(100, 0))
+        self.menuButton.setMaximumSize(QSize(100, 25))
 
         self.verticalLayout.addWidget(self.menuButton)
 
@@ -64,18 +64,75 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout.addWidget(self.sideMenuFrame)
 
-        self.modelArea = QTabWidget(self.baseFrame)
+        self.modelArea = QFrame(self.baseFrame)
         self.modelArea.setObjectName(u"modelArea")
-        self.modelArea.setMinimumSize(QSize(400, 0))
-        self.modelArea.setMaximumSize(QSize(2000, 16777215))
-        self.model_1 = QWidget()
-        self.model_1.setObjectName(u"model_1")
-        self.model_1.setAutoFillBackground(False)
-        self.gridLayout_2 = QGridLayout(self.model_1)
+        self.modelArea.setFrameShape(QFrame.StyledPanel)
+        self.modelArea.setFrameShadow(QFrame.Raised)
+        self.gridLayout_2 = QGridLayout(self.modelArea)
         self.gridLayout_2.setSpacing(0)
         self.gridLayout_2.setObjectName(u"gridLayout_2")
         self.gridLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.infoPanelFrame = QFrame(self.model_1)
+        self.plotPanelFrame = QFrame(self.modelArea)
+        self.plotPanelFrame.setObjectName(u"plotPanelFrame")
+        self.plotPanelFrame.setMinimumSize(QSize(800, 0))
+        self.plotPanelFrame.setMaximumSize(QSize(1200, 16777215))
+        self.plotPanelFrame.setFrameShape(QFrame.StyledPanel)
+        self.plotPanelFrame.setFrameShadow(QFrame.Raised)
+        self.gridLayout_3 = QGridLayout(self.plotPanelFrame)
+        self.gridLayout_3.setSpacing(5)
+        self.gridLayout_3.setObjectName(u"gridLayout_3")
+        self.gridLayout_3.setContentsMargins(-1, 0, -1, 0)
+        self.upperPlotFrame = QFrame(self.plotPanelFrame)
+        self.upperPlotFrame.setObjectName(u"upperPlotFrame")
+        self.upperPlotFrame.setFrameShape(QFrame.StyledPanel)
+        self.upperPlotFrame.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout_2 = QHBoxLayout(self.upperPlotFrame)
+        self.horizontalLayout_2.setSpacing(5)
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.upperPlotTabWidget = QTabWidget(self.upperPlotFrame)
+        self.upperPlotTabWidget.setObjectName(u"upperPlotTabWidget")
+        self.upperPlotTabWidget.setMaximumSize(QSize(16777215, 1000))
+        self.upperPlotTabWidget.setTabPosition(QTabWidget.North)
+
+        self.horizontalLayout_2.addWidget(self.upperPlotTabWidget)
+
+        self.upper_new_plot_button = QPushButton(self.upperPlotFrame)
+        self.upper_new_plot_button.setObjectName(u"upper_new_plot_button")
+        self.upper_new_plot_button.setMaximumSize(QSize(20, 300))
+
+        self.horizontalLayout_2.addWidget(self.upper_new_plot_button)
+
+
+        self.gridLayout_3.addWidget(self.upperPlotFrame, 0, 0, 1, 1)
+
+        self.bottomPlotFrame = QFrame(self.plotPanelFrame)
+        self.bottomPlotFrame.setObjectName(u"bottomPlotFrame")
+        self.bottomPlotFrame.setFrameShape(QFrame.StyledPanel)
+        self.bottomPlotFrame.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout_3 = QHBoxLayout(self.bottomPlotFrame)
+        self.horizontalLayout_3.setSpacing(5)
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
+        self.bottomPlotTabWidget = QTabWidget(self.bottomPlotFrame)
+        self.bottomPlotTabWidget.setObjectName(u"bottomPlotTabWidget")
+        self.bottomPlotTabWidget.setMaximumSize(QSize(16777215, 1000))
+
+        self.horizontalLayout_3.addWidget(self.bottomPlotTabWidget)
+
+        self.bottom_new_plot_button = QPushButton(self.bottomPlotFrame)
+        self.bottom_new_plot_button.setObjectName(u"bottom_new_plot_button")
+        self.bottom_new_plot_button.setMaximumSize(QSize(20, 300))
+
+        self.horizontalLayout_3.addWidget(self.bottom_new_plot_button)
+
+
+        self.gridLayout_3.addWidget(self.bottomPlotFrame, 1, 0, 1, 1)
+
+
+        self.gridLayout_2.addWidget(self.plotPanelFrame, 0, 0, 1, 1)
+
+        self.infoPanelFrame = QFrame(self.modelArea)
         self.infoPanelFrame.setObjectName(u"infoPanelFrame")
         self.infoPanelFrame.setMinimumSize(QSize(300, 0))
         self.infoPanelFrame.setMaximumSize(QSize(800, 16777215))
@@ -83,7 +140,9 @@ class Ui_MainWindow(object):
         self.infoPanelFrame.setFrameShape(QFrame.StyledPanel)
         self.infoPanelFrame.setFrameShadow(QFrame.Raised)
         self.gridLayout_7 = QGridLayout(self.infoPanelFrame)
+        self.gridLayout_7.setSpacing(10)
         self.gridLayout_7.setObjectName(u"gridLayout_7")
+        self.gridLayout_7.setContentsMargins(0, 5, 0, 0)
         self.inputOutputInfoFrame = QFrame(self.infoPanelFrame)
         self.inputOutputInfoFrame.setObjectName(u"inputOutputInfoFrame")
         self.inputOutputInfoFrame.setMaximumSize(QSize(16777215, 150))
@@ -206,64 +265,24 @@ class Ui_MainWindow(object):
 
         self.gridLayout_7.addWidget(self.modelValidationInfoFrame, 1, 0, 1, 1)
 
-        self.dynamicFrame = QFrame(self.infoPanelFrame)
-        self.dynamicFrame.setObjectName(u"dynamicFrame")
-        self.dynamicFrame.setMinimumSize(QSize(0, 370))
-        self.dynamicFrame.setFrameShape(QFrame.StyledPanel)
-        self.dynamicFrame.setFrameShadow(QFrame.Raised)
-        self.verticalLayout_2 = QVBoxLayout(self.dynamicFrame)
-        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.dynamicTitle = QLabel(self.dynamicFrame)
-        self.dynamicTitle.setObjectName(u"dynamicTitle")
-        self.dynamicTitle.setMaximumSize(QSize(16777215, 30))
-
-        self.verticalLayout_2.addWidget(self.dynamicTitle)
-
-        self.graphicsView = QGraphicsView(self.dynamicFrame)
+        self.infoWidget = QTabWidget(self.infoPanelFrame)
+        self.infoWidget.setObjectName(u"infoWidget")
+        self.tab = QWidget()
+        self.tab.setObjectName(u"tab")
+        self.gridLayout_4 = QGridLayout(self.tab)
+        self.gridLayout_4.setObjectName(u"gridLayout_4")
+        self.graphicsView = QGraphicsView(self.tab)
         self.graphicsView.setObjectName(u"graphicsView")
 
-        self.verticalLayout_2.addWidget(self.graphicsView)
+        self.gridLayout_4.addWidget(self.graphicsView, 0, 0, 1, 1)
 
+        self.infoWidget.addTab(self.tab, "")
 
-        self.gridLayout_7.addWidget(self.dynamicFrame, 2, 0, 1, 1, Qt.AlignBottom)
+        self.gridLayout_7.addWidget(self.infoWidget, 2, 0, 1, 1)
 
 
         self.gridLayout_2.addWidget(self.infoPanelFrame, 0, 1, 1, 1)
 
-        self.plotPanelFrame = QFrame(self.model_1)
-        self.plotPanelFrame.setObjectName(u"plotPanelFrame")
-        self.plotPanelFrame.setMinimumSize(QSize(600, 0))
-        self.plotPanelFrame.setMaximumSize(QSize(1200, 16777215))
-        self.plotPanelFrame.setFrameShape(QFrame.StyledPanel)
-        self.plotPanelFrame.setFrameShadow(QFrame.Raised)
-        self.gridLayout_10 = QGridLayout(self.plotPanelFrame)
-        self.gridLayout_10.setObjectName(u"gridLayout_10")
-        self.upperPlotTabWidget = QTabWidget(self.plotPanelFrame)
-        self.upperPlotTabWidget.setObjectName(u"upperPlotTabWidget")
-        
-
-        self.gridLayout_10.addWidget(self.upperPlotTabWidget, 0, 0, 1, 1)
-
-        self.upper_new_plot_button = QPushButton(self.plotPanelFrame)
-        self.upper_new_plot_button.setObjectName(u"upper_new_plot_button")
-
-        self.gridLayout_10.addWidget(self.upper_new_plot_button, 1, 0, 1, 1, Qt.AlignRight)
-
-        self.bottomPlotTabWidget = QTabWidget(self.plotPanelFrame)
-        self.bottomPlotTabWidget.setObjectName(u"bottomPlotTabWidget")
-
-
-        self.gridLayout_10.addWidget(self.bottomPlotTabWidget, 2, 0, 1, 1)
-
-        self.bottom_new_plot_button = QPushButton(self.plotPanelFrame)
-        self.bottom_new_plot_button.setObjectName(u"bottom_new_plot_button")
-
-        self.gridLayout_10.addWidget(self.bottom_new_plot_button, 3, 0, 1, 1, Qt.AlignRight)
-
-
-        self.gridLayout_2.addWidget(self.plotPanelFrame, 0, 0, 1, 1)
-
-        self.modelArea.addTab(self.model_1, "")
 
         self.horizontalLayout.addWidget(self.modelArea)
 
@@ -277,9 +296,9 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.modelArea.setCurrentIndex(0)
-        self.upperPlotTabWidget.setCurrentIndex(0)
-        self.bottomPlotTabWidget.setCurrentIndex(1)
+        self.upperPlotTabWidget.setCurrentIndex(-1)
+        self.bottomPlotTabWidget.setCurrentIndex(-1)
+        self.infoWidget.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -288,13 +307,33 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
         self.menuButton.setText(QCoreApplication.translate("MainWindow", u"Menu", None))
-        self.inputDataTitle.setText(QCoreApplication.translate("MainWindow", u"Input Data", None))
-        self.outputDataTitle.setText(QCoreApplication.translate("MainWindow", u"Output Data", None))
-        self.validationTitle.setText(QCoreApplication.translate("MainWindow", u"Validation", None))
-        self.modelDataTitle.setText(QCoreApplication.translate("MainWindow", u"Model", None))
-        self.dynamicTitle.setText(QCoreApplication.translate("MainWindow", u"Model graph", None))
         self.upper_new_plot_button.setText(QCoreApplication.translate("MainWindow", u"+", None))
         self.bottom_new_plot_button.setText(QCoreApplication.translate("MainWindow", u"+", None))
-        self.modelArea.setTabText(self.modelArea.indexOf(self.model_1), QCoreApplication.translate("MainWindow", u"Tab 1", None))
+        self.inputDataTitle.setText(QCoreApplication.translate("MainWindow", u"Input Data", None))
+        self.inputDataInfo.setHtml(QCoreApplication.translate("MainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'MS Shell Dlg 2'; font-size:7.8pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
+        self.outputDataTitle.setText(QCoreApplication.translate("MainWindow", u"Output Data", None))
+        self.outputDataInfo.setHtml(QCoreApplication.translate("MainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'MS Shell Dlg 2'; font-size:7.8pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
+        self.validationTitle.setText(QCoreApplication.translate("MainWindow", u"Validation", None))
+        self.validationInfo.setHtml(QCoreApplication.translate("MainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'MS Shell Dlg 2'; font-size:7.8pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p>\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
+        self.modelDataTitle.setText(QCoreApplication.translate("MainWindow", u"Model", None))
+        self.modelInfo.setHtml(QCoreApplication.translate("MainWindow", u"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'MS Shell Dlg 2'; font-size:7.8pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
+        self.infoWidget.setTabText(self.infoWidget.indexOf(self.tab), QCoreApplication.translate("MainWindow", u"Tab 1", None))
     # retranslateUi
 

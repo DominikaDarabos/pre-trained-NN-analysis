@@ -1,9 +1,9 @@
 class Project():
     def __init__(self):
         #TODO: until testing
-        self.model_file_path = "C:/Users/dominika/vpnet/trained_models/full_keras_model.h5"
+        self.model_file_path = "C:/Users/dominika/vpnet/trained_models/ecg_train_test_full_model.h5"
         self.custom_object_file_path = "C:/Users/dominika/vpnet/tensorflow/VPLayer.py"
-        self.input_file_path = "C:/Users/dominika/vpnet/tensorflow/synhermite_test_data.h5"
+        self.input_file_path = "C:/Users/dominika/vpnet/tensorflow/ecg_test_data.h5"
         self.model = None
         self.model_wo_softmax = None
         self.test_x = None

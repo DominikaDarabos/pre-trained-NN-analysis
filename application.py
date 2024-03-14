@@ -105,11 +105,19 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         self.projects.append(project)
     
     def on_sidemenu_clicked(self, item):
-        first_row_text = self.inputDataInfo.toPlainText().split('---')[0]
-        self.inputDataInfo.clear()
-        self.inputDataInfo.append(first_row_text)
-        self.inputDataInfo.append('---')
-        self.inputDataInfo.append(item.text())
+        self.upperPlotTabWidget.clear()
+        self.bottomPlotTabWidget.clear()
+        analyzer = str(self.listWidget.currentItem().text())
+        upperPlotCount = self.projects[0].config["analyzers"][analyzer]["upper_plot_count"]
+        for tab_idx in range(upperPlotCount):
+            upperPlot = self.projects[0].config["analyzers"][analyzer]["upper_tabs"][f"tab_{tab_idx}"]
+            self.upperPlotTabWidget.addTab(upperPlot, f"Tab {tab_idx + 1}")
+            self.load_plot("upper", tab_idx)
+        bottomPlotCount = self.projects[0].config["analyzers"][analyzer]["bottom_plot_count"]
+        for tab_idx in range(bottomPlotCount):
+            bottomPlot = self.projects[0].config["analyzers"][analyzer]["bottom_tabs"][f"tab_{tab_idx}"]
+            self.bottomPlotTabWidget.addTab(bottomPlot, f"Tab {tab_idx + 1}")
+            self.load_plot("bottom", tab_idx)
     
     def load_start_window(self):
         self.populate_list_widget()
@@ -237,39 +245,7 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         UpperPlot_Channel_4.setText(QCoreApplication.translate("MainWindow", u"Channel_4", None))
         self.upperPlotTabWidget.addTab(upperPlotTab, f"Tab {upperPlotCount + 1}")
         self.projects[0].config["analyzers"][analyzer]["upper_tabs"][f"tab_{upperPlotCount}"] = upperPlotTab
-
-
-        print(self.listWidget.currentItem().text())
-        #self.upperPlotTabWidget.addTab(tab_content_widget, str(self.projects[0].config["analyzers"][analyzer]["upper_figure_count"]))
-        print(self.projects[0].config["analyzers"][analyzer])
-        
-
-        #scene = QtWidgets.QGraphicsScene()
-        #self.upperPlot_1.setScene(scene)
-
-        current_tab = self.projects[0].config["analyzers"][analyzer]["upper_tabs"].get(f"tab_{upperPlotCount}")
-        if current_tab:
-            scene = QtWidgets.QGraphicsScene()
-            current_upper_plot = current_tab.findChild(QtWidgets.QGraphicsView, f"upperPlot_{upperPlotCount}")
-            if current_upper_plot:
-                current_upper_plot.setScene(scene)
-            else:
-                print("upper_plot_2 not found")
-
-        figure = Figure(figsize=(4, 3), dpi=100)
-        axes = figure.gca()
-
-        x = np.linspace(1, 10)
-        y = np.linspace(1, 10)
-        y1 = np.linspace(11, 20)
-        axes.plot(x, y, "-k", label="first one")
-        axes.plot(x, y1, "-b", label="second one")
-        axes.legend()
-        axes.grid(True)
-
-        canvas = FigureCanvas(figure)
-        scene.addWidget(canvas)
-        current_upper_plot.show()
+        self.load_plot("upper", upperPlotCount)
         self.projects[0].increase_upper_plot_count(analyzer)
 
     def create_new_bottom_comparison_figure(self, figure):
@@ -328,23 +304,20 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         self.projects[0].config["analyzers"][analyzer]["bottom_tabs"][f"tab_{bottomPlotCount}"] = bottomPlotTab
 
 
-        print(self.listWidget.currentItem().text())
-        
-        #self.bottomPlotTabWidget.addTab(tab_content_widget, str(self.projects[0].config["analyzers"][analyzer]["bottom_figure_count"]))
-        print(self.projects[0].config["analyzers"][analyzer])
-        
+        self.load_plot("bottom", bottomPlotCount)
+        self.projects[0].increase_bottom_plot_count(analyzer)
 
-        #scene = QtWidgets.QGraphicsScene()
-        #self.bottomPlot_1.setScene(scene)
-
-        current_tab = self.projects[0].config["analyzers"][analyzer]["bottom_tabs"].get(f"tab_{bottomPlotCount}")
+    def load_plot(self, position, tab_number):
+        analyzer = str(self.listWidget.currentItem().text())
+        #plotCount = self.projects[0].config["analyzers"][analyzer][f"{position}_plot_count"]
+        current_tab = self.projects[0].config["analyzers"][analyzer][f"{position}_tabs"].get(f"tab_{tab_number}")
         if current_tab:
             scene = QtWidgets.QGraphicsScene()
-            current_bottom_plot = current_tab.findChild(QtWidgets.QGraphicsView, f"bottomPlot_{bottomPlotCount}")
-            if current_bottom_plot:
-                current_bottom_plot.setScene(scene)
+            current_plot = current_tab.findChild(QtWidgets.QGraphicsView, f"{position}Plot_{tab_number}")
+            if current_plot:
+                current_plot.setScene(scene)
             else:
-                print("bottom_plot_2 not found")
+                print(f"{position}Plot_{tab_number} not found")
 
         figure = Figure(figsize=(4, 3), dpi=100)
         axes = figure.gca()
@@ -359,9 +332,7 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
 
         canvas = FigureCanvas(figure)
         scene.addWidget(canvas)
-        current_bottom_plot.show()
-        self.projects[0].increase_bottom_plot_count(analyzer)
-
+        current_plot.show()
 
 class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
     def __init__(self, main, parent=None):
