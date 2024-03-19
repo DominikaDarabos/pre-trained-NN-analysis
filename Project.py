@@ -8,6 +8,7 @@ class Project():
         self.model_wo_softmax = None
         self.test_x = None
         self.test_y = None
+        self.number_of_classes = None
         self.config = {
             "analyzers": {
                 "IG": {
@@ -17,7 +18,9 @@ class Project():
                     "upper_plot_count": 0,
                     "bottom_plot_count": 0,
                     "upper_tabs": {},
-                    "bottom_tabs": {}
+                    "bottom_tabs": {},
+                    "upper_figures": [],
+                    "bottom_figures": []
                 },
                 "LRP_Z": {
                     "checked": False,
@@ -26,7 +29,9 @@ class Project():
                     "upper_plot_count": 0,
                     "bottom_plot_count": 0,
                     "upper_tabs": {},
-                    "bottom_tabs": {}
+                    "bottom_tabs": {},
+                    "upper_figures": [],
+                    "bottom_figures": []
                 },
                 "LRP_AB": {
                     "checked": False,
@@ -37,7 +42,9 @@ class Project():
                     "upper_plot_count": 0,
                     "bottom_plot_count": 0,
                     "upper_tabs": {},
-                    "bottom_tabs": {}
+                    "bottom_tabs": {},
+                    "upper_figures": [],
+                    "bottom_figures": []
                 },
                 "LRP_Epsilon": {
                     "checked": False,
@@ -47,7 +54,9 @@ class Project():
                     "upper_plot_count": 0,
                     "bottom_plot_count": 0,
                     "upper_tabs": {},
-                    "bottom_tabs": {}
+                    "bottom_tabs": {},
+                    "upper_figures": [],
+                    "bottom_figures": []
                 }
             }
         }

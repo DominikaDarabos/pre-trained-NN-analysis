@@ -17,7 +17,6 @@ from NewFigureDialog import NewFigureDialog
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
-from Figure import Figure_
 tf.compat.v1.disable_eager_execution()
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -47,6 +46,9 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
 
         self.upper_new_plot_button.clicked.connect(self.show_create_figure_dialog)
         self.bottom_new_plot_button.clicked.connect(self.show_create_figure_dialog)
+
+    def get_current_analyzer(self):
+        return str(self.listWidget.currentItem().text())
 
     # add elements to side menu bar
     def populate_list_widget(self):
@@ -85,6 +87,7 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
             with h5py.File(self.projects[0].input_file_path, 'r') as hf:
                 self.projects[0].test_x = hf['test_x'][:]
                 self.projects[0].test_y = hf['test_y'][:]
+            self.projects[0].number_of_classes = self.projects[0].test_y.shape[1]
             print("Successfully loaded input file")
 
     def set_shadow_effect(self, enabled=True):
@@ -101,7 +104,7 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
     def on_sidemenu_clicked(self, item):
         self.upperPlotTabWidget.clear()
         self.bottomPlotTabWidget.clear()
-        analyzer = str(self.listWidget.currentItem().text())
+        analyzer = self.get_current_analyzer()
         upperPlotCount = self.projects[0].config["analyzers"][analyzer]["upper_plot_count"]
         for tab_idx in range(upperPlotCount):
             upperPlot = self.projects[0].config["analyzers"][analyzer]["upper_tabs"][f"tab_{tab_idx}"]
@@ -150,10 +153,10 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
     def show_create_figure_dialog(self):
         sender_button = self.sender()
         if sender_button == self.upper_new_plot_button:
-            qt_dialog = NewFigureDialog(self, self.projects[0], place = 0)
+            qt_dialog = NewFigureDialog(self, place = 0)
             qt_dialog.exec_()
         elif sender_button == self.bottom_new_plot_button:
-            qt_dialog = NewFigureDialog(self, self.projects[0], place = 1)
+            qt_dialog = NewFigureDialog(self, place = 1)
             qt_dialog.exec_()
     
     def populate_analyzers(self):
@@ -183,126 +186,79 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
                 self.projects[0].config["analyzers"]["LRP_AB"]["analyzer"] = \
                     innvestigate.create_analyzer("lrp.alpha_2_beta_1", self.projects[0].model,\
                     disable_model_checks=True, neuron_selection_mode=self.projects[0].config["analyzers"]["LRP_AB"]["activation"])
+    
+    def create_new_comparison_figure(self, place, figure):
+        analyzer = self.get_current_analyzer()
+        plotCount = self.projects[0].config["analyzers"][analyzer][f"{place}_plot_count"]
 
-    def create_new_upper_comparison_figure(self, figure):
-        analyzer = str(self.listWidget.currentItem().text())
-        upperPlotCount = self.projects[0].config["analyzers"][analyzer]["upper_plot_count"]
-
-        upperPlotTab = QWidget()
-        upperPlotTab.setObjectName(f"upperPlotTab_{upperPlotCount}")
-        gridLayout_3 = QGridLayout(upperPlotTab)
+        plotTab = QWidget()
+        plotTab.setObjectName(f"{place}PlotTab_{plotCount}")
+        gridLayout_3 = QGridLayout(plotTab)
         gridLayout_3.setObjectName(u"gridLayout_3")
-        upperFigureInfoFrame = QFrame(upperPlotTab)
-        upperFigureInfoFrame.setObjectName(f"upperFigureInfoFrame_{upperPlotCount}")
-        upperFigureInfoFrame.setMinimumSize(QSize(100, 0))
-        upperFigureInfoFrame.setMaximumSize(QSize(200, 16777215))
-        upperFigureInfoFrame.setFrameShape(QFrame.StyledPanel)
-        upperFigureInfoFrame.setFrameShadow(QFrame.Raised)
-        gridLayout_5 = QGridLayout(upperFigureInfoFrame)
+        figureInfoFrame = QFrame(plotTab)
+        figureInfoFrame.setObjectName(f"{place}FigureInfoFrame_{plotCount}")
+        figureInfoFrame.setMinimumSize(QSize(100, 0))
+        figureInfoFrame.setMaximumSize(QSize(200, 16777215))
+        figureInfoFrame.setFrameShape(QFrame.StyledPanel)
+        figureInfoFrame.setFrameShadow(QFrame.Raised)
+        gridLayout_5 = QGridLayout(figureInfoFrame)
         gridLayout_5.setSpacing(0)
         gridLayout_5.setObjectName(u"gridLayout_5")
         gridLayout_5.setContentsMargins(0, 0, 0, 0)
-        upperFigureAttributes = QTextBrowser(upperFigureInfoFrame)
-        upperFigureAttributes.setObjectName(f"upperFigureAttributes_{upperPlotCount}")
-        upperFigureAttributes.setMinimumSize(QSize(100, 100))
-        upperFigureAttributes.setMaximumSize(QSize(200, 250))
-        gridLayout_5.addWidget(upperFigureAttributes, 0, 0, 1, 1)
-        upperChannelsFrame = QFrame(upperFigureInfoFrame)
-        upperChannelsFrame.setObjectName(f"upperChannelsFrame_{upperPlotCount}")
-        upperChannelsFrame.setMinimumSize(QSize(100, 100))
-        upperChannelsFrame.setMaximumSize(QSize(200, 250))
-        upperChannelsFrame.setFrameShape(QFrame.StyledPanel)
-        upperChannelsFrame.setFrameShadow(QFrame.Raised)
-        verticalLayout_3 = QVBoxLayout(upperChannelsFrame)
+        figureAttributes = QTextBrowser(figureInfoFrame)
+        figureAttributes.setObjectName(f"{place}FigureAttributes_{plotCount}")
+        figureAttributes.setMinimumSize(QSize(100, 100))
+        figureAttributes.setMaximumSize(QSize(200, 250))
+        gridLayout_5.addWidget(figureAttributes, 0, 0, 1, 1)
+        channelsFrame = QFrame(figureInfoFrame)
+        channelsFrame.setObjectName(f"{place}ChannelsFrame_{plotCount}")
+        channelsFrame.setMinimumSize(QSize(100, 100))
+        channelsFrame.setMaximumSize(QSize(200, 250))
+        channelsFrame.setFrameShape(QFrame.StyledPanel)
+        channelsFrame.setFrameShadow(QFrame.Raised)
+        verticalLayout_3 = QVBoxLayout(channelsFrame)
         verticalLayout_3.setObjectName(u"verticalLayout_3")
-        UpperPlot_Channel_1 = QCheckBox(upperChannelsFrame)
-        UpperPlot_Channel_1.setObjectName(f"UpperPlot_{upperPlotCount}_Channel_1")
-        verticalLayout_3.addWidget(UpperPlot_Channel_1)
-        UpperPlot_Channel_2 = QCheckBox(upperChannelsFrame)
-        UpperPlot_Channel_2.setObjectName(f"UpperPlot_{upperPlotCount}_Channel_2")
-        verticalLayout_3.addWidget(UpperPlot_Channel_2)
-        UpperPlot_Channel_3 = QCheckBox(upperChannelsFrame)
-        UpperPlot_Channel_3.setObjectName(f"UpperPlot_{upperPlotCount}_Channel_3")
-        verticalLayout_3.addWidget(UpperPlot_Channel_3)
-        UpperPlot_Channel_4 = QCheckBox(upperChannelsFrame)
-        UpperPlot_Channel_4.setObjectName(f"UpperPlot_{upperPlotCount}_Channel_4")
-        verticalLayout_3.addWidget(UpperPlot_Channel_4)
-        gridLayout_5.addWidget(upperChannelsFrame, 1, 0, 1, 1)
-        gridLayout_3.addWidget(upperFigureInfoFrame, 0, 2, 1, 1)
-        upperPlot = QGraphicsView(upperPlotTab)
-        upperPlot.setObjectName(f"upperPlot_{upperPlotCount}")
-        upperPlot.setMinimumSize(QSize(400, 0))
-        gridLayout_3.addWidget(upperPlot, 0, 1, 1, 1)
-        UpperPlot_Channel_1.setText(QCoreApplication.translate("MainWindow", u"Channel_1", None))
-        UpperPlot_Channel_2.setText(QCoreApplication.translate("MainWindow", u"Channel_2", None))
-        UpperPlot_Channel_3.setText(QCoreApplication.translate("MainWindow", u"Channel_3", None))
-        UpperPlot_Channel_4.setText(QCoreApplication.translate("MainWindow", u"Channel_4", None))
-        self.upperPlotTabWidget.addTab(upperPlotTab, f"Tab {upperPlotCount + 1}")
-        self.projects[0].config["analyzers"][analyzer]["upper_tabs"][f"tab_{upperPlotCount}"] = upperPlotTab
-        self.load_plot("upper", upperPlotCount)
-        self.projects[0].increase_upper_plot_count(analyzer)
+        plot_Channel_1 = QCheckBox(channelsFrame)
+        plot_Channel_1.setObjectName(f"{place}Plot_{plotCount}_Channel_1")
+        verticalLayout_3.addWidget(plot_Channel_1)
+        plot_Channel_2 = QCheckBox(channelsFrame)
+        plot_Channel_2.setObjectName(f"{place}Plot_{plotCount}_Channel_2")
+        verticalLayout_3.addWidget(plot_Channel_2)
+        plot_Channel_3 = QCheckBox(channelsFrame)
+        plot_Channel_3.setObjectName(f"{place}Plot_{plotCount}_Channel_3")
+        verticalLayout_3.addWidget(plot_Channel_3)
+        if figure.is_comparison():
+            plot_Channel_1.setText(QCoreApplication.translate("MainWindow", u"Single sample", None))
+            plot_Channel_2.setText(QCoreApplication.translate("MainWindow", u"Average sample", None))
+            plot_Channel_3.setText(QCoreApplication.translate("MainWindow", u"Single analyzer", None))
+            plot_Channel_4 = QCheckBox(channelsFrame)
+            plot_Channel_4.setObjectName(f"{place}Plot_{plotCount}_Channel_4")
+            verticalLayout_3.addWidget(plot_Channel_4)
+            plot_Channel_4.setText(QCoreApplication.translate("MainWindow", u"Average analyzer", None))
+        if figure.is_distribution():
+            plot_Channel_1.setText(QCoreApplication.translate("MainWindow", u"Class_1", None))
+            plot_Channel_2.setText(QCoreApplication.translate("MainWindow", u"Class_2", None))
+            plot_Channel_3.setText(QCoreApplication.translate("MainWindow", u"Class_3", None))
+        gridLayout_5.addWidget(channelsFrame, 1, 0, 1, 1)
+        gridLayout_3.addWidget(figureInfoFrame, 0, 2, 1, 1)
+        plot = QGraphicsView(plotTab)
+        plot.setObjectName(f"{place}Plot_{plotCount}")
+        plot.setMinimumSize(QSize(400, 0))
+        gridLayout_3.addWidget(plot, 0, 1, 1, 1)
+        
+        if place == "upper":
+            self.upperPlotTabWidget.addTab(plotTab, f"Tab {plotCount + 1}")
+            self.projects[0].increase_upper_plot_count(analyzer)
+        if place == "bottom":
+            self.bottomPlotTabWidget.addTab(plotTab, f"Tab {plotCount + 1}")
+            self.projects[0].increase_bottom_plot_count(analyzer)
+        self.projects[0].config["analyzers"][analyzer][f"{place}_tabs"][f"tab_{plotCount}"] = plotTab
 
-    def create_new_bottom_comparison_figure(self, figure):
-        analyzer = str(self.listWidget.currentItem().text())
-        bottomPlotCount = self.projects[0].config["analyzers"][analyzer]["bottom_plot_count"]
-        bottomPlotTab = QWidget()
-        bottomPlotTab.setObjectName(f"bottomPlotTab_{bottomPlotCount}")
-        gridLayout_3 = QGridLayout(bottomPlotTab)
-        gridLayout_3.setObjectName(u"gridLayout_3")
-        bottomFigureInfoFrame = QFrame(bottomPlotTab)
-        bottomFigureInfoFrame.setObjectName(f"bottomFigureInfoFrame_{bottomPlotCount}")
-        bottomFigureInfoFrame.setMinimumSize(QSize(100, 0))
-        bottomFigureInfoFrame.setMaximumSize(QSize(200, 16777215))
-        bottomFigureInfoFrame.setFrameShape(QFrame.StyledPanel)
-        bottomFigureInfoFrame.setFrameShadow(QFrame.Raised)
-        gridLayout_5 = QGridLayout(bottomFigureInfoFrame)
-        gridLayout_5.setSpacing(0)
-        gridLayout_5.setObjectName(u"gridLayout_5")
-        gridLayout_5.setContentsMargins(0, 0, 0, 0)
-        bottomFigureAttributes = QTextBrowser(bottomFigureInfoFrame)
-        bottomFigureAttributes.setObjectName(f"bottomFigureAttributes_{bottomPlotCount}")
-        bottomFigureAttributes.setMinimumSize(QSize(100, 100))
-        bottomFigureAttributes.setMaximumSize(QSize(200, 250))
-        gridLayout_5.addWidget(bottomFigureAttributes, 0, 0, 1, 1)
-        bottomChannelsFrame = QFrame(bottomFigureInfoFrame)
-        bottomChannelsFrame.setObjectName(f"bottomChannelsFrame_{bottomPlotCount}")
-        bottomChannelsFrame.setMinimumSize(QSize(100, 100))
-        bottomChannelsFrame.setMaximumSize(QSize(200, 250))
-        bottomChannelsFrame.setFrameShape(QFrame.StyledPanel)
-        bottomChannelsFrame.setFrameShadow(QFrame.Raised)
-        verticalLayout_3 = QVBoxLayout(bottomChannelsFrame)
-        verticalLayout_3.setObjectName(u"verticalLayout_3")
-        bottomPlot_Channel_1 = QCheckBox(bottomChannelsFrame)
-        bottomPlot_Channel_1.setObjectName(f"bottomPlot_{bottomPlotCount}_Channel_1")
-        verticalLayout_3.addWidget(bottomPlot_Channel_1)
-        bottomPlot_Channel_2 = QCheckBox(bottomChannelsFrame)
-        bottomPlot_Channel_2.setObjectName(f"bottomPlot_{bottomPlotCount}_Channel_2")
-        verticalLayout_3.addWidget(bottomPlot_Channel_2)
-        bottomPlot_Channel_3 = QCheckBox(bottomChannelsFrame)
-        bottomPlot_Channel_3.setObjectName(f"bottomPlot_{bottomPlotCount}_Channel_3")
-        verticalLayout_3.addWidget(bottomPlot_Channel_3)
-        bottomPlot_Channel_4 = QCheckBox(bottomChannelsFrame)
-        bottomPlot_Channel_4.setObjectName(f"bottomPlot_{bottomPlotCount}_Channel_4")
-        verticalLayout_3.addWidget(bottomPlot_Channel_4)
-        gridLayout_5.addWidget(bottomChannelsFrame, 1, 0, 1, 1)
-        gridLayout_3.addWidget(bottomFigureInfoFrame, 0, 2, 1, 1)
-        bottomPlot = QGraphicsView(bottomPlotTab)
-        bottomPlot.setObjectName(f"bottomPlot_{bottomPlotCount}")
-        bottomPlot.setMinimumSize(QSize(400, 0))
-        gridLayout_3.addWidget(bottomPlot, 0, 1, 1, 1)
-        bottomPlot_Channel_1.setText(QCoreApplication.translate("MainWindow", u"Channel_1", None))
-        bottomPlot_Channel_2.setText(QCoreApplication.translate("MainWindow", u"Channel_2", None))
-        bottomPlot_Channel_3.setText(QCoreApplication.translate("MainWindow", u"Channel_3", None))
-        bottomPlot_Channel_4.setText(QCoreApplication.translate("MainWindow", u"Channel_4", None))
-        self.bottomPlotTabWidget.addTab(bottomPlotTab, f"Tab {bottomPlotCount + 1}")
-        self.projects[0].config["analyzers"][analyzer]["bottom_tabs"][f"tab_{bottomPlotCount}"] = bottomPlotTab
-
-
-        self.load_plot("bottom", bottomPlotCount)
-        self.projects[0].increase_bottom_plot_count(analyzer)
+        self.load_plot(place, plotCount)
+    
 
     def load_plot(self, position, tab_number):
-        analyzer = str(self.listWidget.currentItem().text())
+        analyzer = self.get_current_analyzer()
         #plotCount = self.projects[0].config["analyzers"][analyzer][f"{position}_plot_count"]
         current_tab = self.projects[0].config["analyzers"][analyzer][f"{position}_tabs"].get(f"tab_{tab_number}")
         if current_tab:

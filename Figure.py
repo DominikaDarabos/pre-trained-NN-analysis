@@ -50,3 +50,9 @@ class Figure_():
                         }
                     }
                 }
+
+    def is_comparison(self):
+        return ("comparison" in self.config["plot_type"])
+
+    def is_distribution(self):
+        return ("distribution" in self.config["plot_type"])

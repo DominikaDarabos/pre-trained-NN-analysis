@@ -7,13 +7,12 @@ from Figure import Figure_
 
 
 class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
-    def __init__(self, main, project, place, parent=None):
+    def __init__(self, main, place, parent=None):
         super().__init__(parent)
         self.setupUi(self) 
         self.setup_widgets_for_comparison()
         self.activateWindow()
         self.app = main
-        self.project = project
         self.place = place
         self.plotTypeCombo.currentIndexChanged.connect(self.on_combobox_selection_change)
         self.createButton.clicked.connect(self.create_figure)
@@ -77,17 +76,27 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
                     figure.config["plot_type"]["distribution"]["box_plot"]["num_of_bins"] = 30
             if self.histRadio.isChecked():
                 figure.config["plot_type"]["distribution"]["histogram"]["avtivated"] = True
-                if self.AnalyzerCheckbow.isChecked():
+                if self.analyzerRadio.isChecked():
                     figure.config["plot_type"]["distribution"]["histogram"]["analyzer_relevance_scores"]["activated"] = True
                     figure.config["plot_type"]["distribution"]["histogram"]["analyzer_relevance_scores"]["show_all_class"] = self.analyzerRadio.isChecked()
-                if self.inputCheckbox.isChecked():
+                if self.inputRadio.isChecked():
                     figure.config["plot_type"]["distribution"]["histogram"]["input"]["activated"] = True
                     figure.config["plot_type"]["distribution"]["histogram"]["input"]["show_all_class"] = self.inputRadio.isChecked()
         
         if self.place == 0:
-            self.app.create_new_upper_comparison_figure(figure)
+            self.app.create_new_comparison_figure("upper", figure)
+            analyzer = self.app.get_current_analyzer()
+            self.app.projects[0].config["analyzers"][analyzer][f"upper_figures"].append(figure)
+
+            currentcount = self.app.projects[0].config["analyzers"][analyzer][f"upper_plot_count"]
+            print(self.app.projects[0].config["analyzers"][analyzer][f"upper_figures"][currentcount-1])
         elif self.place == 1:
-            self.app.create_new_bottom_comparison_figure(figure)
+            self.app.create_new_comparison_figure("bottom", figure)
+            analyzer = self.app.get_current_analyzer()
+            self.app.projects[0].config["analyzers"][analyzer][f"bottom_figures"].append(figure)
+
+            currentcount = self.app.projects[0].config["analyzers"][analyzer][f"bottom_plot_count"]
+            print(self.app.projects[0].config["analyzers"][analyzer][f"bottom_figures"][currentcount-1])
         self.accept()
 
 
@@ -261,18 +270,18 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
         self.histDetailesFrame.setFrameShadow(QFrame.Raised)
         self.gridLayout_5 = QGridLayout(self.histDetailesFrame)
         self.gridLayout_5.setObjectName(u"gridLayout_5")
-        self.AnalyzerCheckbow = QCheckBox(self.histDetailesFrame)
-        self.AnalyzerCheckbow.setObjectName(u"AnalyzerCheckbow")
-        self.gridLayout_5.addWidget(self.AnalyzerCheckbow, 0, 0, 1, 1)
         self.analyzerRadio = QRadioButton(self.histDetailesFrame)
         self.analyzerRadio.setObjectName(u"analyzerRadio")
-        self.gridLayout_5.addWidget(self.analyzerRadio, 0, 1, 1, 1)
-        self.inputCheckbox = QCheckBox(self.histDetailesFrame)
-        self.inputCheckbox.setObjectName(u"inputCheckbox")
-        self.gridLayout_5.addWidget(self.inputCheckbox, 1, 0, 1, 1)
+        self.gridLayout_5.addWidget(self.analyzerRadio, 0, 0, 1, 1)
+        #self.analyzerRadio = QRadioButton(self.histDetailesFrame)
+        #self.analyzerRadio.setObjectName(u"analyzerRadio")
+        #self.gridLayout_5.addWidget(self.analyzerRadio, 0, 1, 1, 1)
         self.inputRadio = QRadioButton(self.histDetailesFrame)
         self.inputRadio.setObjectName(u"inputRadio")
-        self.gridLayout_5.addWidget(self.inputRadio, 1, 1, 1, 1)
+        self.gridLayout_5.addWidget(self.inputRadio, 1, 0, 1, 1)
+        #self.inputRadio = QRadioButton(self.histDetailesFrame)
+        #self.inputRadio.setObjectName(u"inputRadio")
+        #self.gridLayout_5.addWidget(self.inputRadio, 1, 1, 1, 1)
         self.gridLayout_3.addWidget(self.histDetailesFrame, 1, 0, 1, 1)
         self.gridLayout_2.addWidget(self.histFrame, 2, 0, 1, 1)
         self.gridLayout.addWidget(self.baseFrame_2, 0, 1, 1, 1)
@@ -281,7 +290,7 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
         self.boxRadio.setText(QCoreApplication.translate("Dialog", u"Box plot", None))
         self.numOfBinsInput.setText(QCoreApplication.translate("Dialog", u"Number of bins", None))
         self.histRadio.setText(QCoreApplication.translate("Dialog", u"Histogram", None))
-        self.AnalyzerCheckbow.setText(QCoreApplication.translate("Dialog", u"Analyzer relevance scores", None))
-        self.analyzerRadio.setText(QCoreApplication.translate("Dialog", u"Show all class", None))
-        self.inputCheckbox.setText(QCoreApplication.translate("Dialog", u"Input", None))
-        self.inputRadio.setText(QCoreApplication.translate("Dialog", u"Show all class", None))
+        self.analyzerRadio.setText(QCoreApplication.translate("Dialog", u"Analyzer relevance scores", None))
+        #self.analyzerRadio.setText(QCoreApplication.translate("Dialog", u"Show all class", None))
+        self.inputRadio.setText(QCoreApplication.translate("Dialog", u"Input", None))
+        #self.inputRadio.setText(QCoreApplication.translate("Dialog", u"Show all class", None))
