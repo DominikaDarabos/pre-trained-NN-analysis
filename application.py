@@ -162,27 +162,42 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
                 innvestigate.create_analyzer("integrated_gradients", self.project.model_wo_softmax,\
                 neuron_selection_mode=self.project.analyzers["IG"].activation,\
                 reference_inputs= self.project.analyzers["IG"].reference_input, steps = self.project.analyzers["IG"].steps)
+            
+            self.project.analyzers["IG"].analyzer_output = self.project.analyzers["IG"].innvestigate_analyzer.analyze(self.project.test_x)
+
         ### create LRP_Z
         if "LRP_Z" in self.project.analyzers:
             self.project.analyzers["LRP_Z"].innvestigate_analyzer = \
                 innvestigate.create_analyzer("lrp.z", self.project.model, disable_model_checks=True,\
                 neuron_selection_mode=self.project.analyzers["LRP_Z"].activation)
+
+            self.project.analyzers["LRP_Z"].analyzer_output = self.project.analyzers["LRP_Z"].innvestigate_analyzer.analyze(self.project.test_x)
+
         ### create LRP_EPSILON ###
         if "LRP_Epsilon" in self.project.analyzers:
             self.project.analyzers["LRP_Epsilon"].innvestigate_analyzer = \
                 innvestigate.create_analyzer("lrp.epsilon", self.project.model,\
                 disable_model_checks=True, neuron_selection_mode=self.project.analyzers["LRP_Epsilon"].activation,\
                 **{"epsilon": self.project.analyzers["LRP_Epsilon"].epsilon})
+
+            self.project.analyzers["LRP_Epsilon"].analyzer_output = self.project.analyzers["LRP_Epsilon"].innvestigate_analyzer.analyze(self.project.test_x)
+
+        ### create LRP_AB ###
         if "LRP_AB" in self.project.analyzers:
             if self.project.analyzers["LRP_AB"].alpha == 1 and self.project.analyzers["LRP_AB"].beta == 0:
                 self.project.analyzers["LRP_AB"].innvestigate_analyzer = \
                     innvestigate.create_analyzer("lrp.alpha_1_beta_0", self.project.model,\
                     disable_model_checks=True, neuron_selection_mode=self.project.analyzers["LRP_AB"].activation)
+
+                self.project.analyzers["LRP_Z"].analyzer_output = self.project.analyzers["LRP_Z"].innvestigate_analyzer.analyze(self.project.test_x)
+
             if self.project.analyzers["LRP_AB"].alpha == 2 and self.project.analyzers["LRP_AB"].beta == 1:
                 self.project.analyzers["LRP_AB"].innvestigate_analyzer = \
                     innvestigate.create_analyzer("lrp.alpha_2_beta_1", self.project.model,\
                     disable_model_checks=True, neuron_selection_mode=self.project.analyzers["LRP_AB"].activation)
-    
+
+                self.project.analyzers["LRP_AB"].analyzer_output = self.project.analyzers["LRP_AB"].innvestigate_analyzer.analyze(self.project.test_x)
+
     def create_new_comparison_figure(self, place, figure):
         analyzer = self.get_current_analyzer()
         plotCount = self.project.analyzers[analyzer].ui_elements_config[f"{place}_plot_count"]
@@ -250,10 +265,10 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
             self.project.analyzers[analyzer].increase_bottom_plot_count()
         self.project.analyzers[analyzer].ui_elements_config[f"{place}_tabs"][f"tab_{plotCount}"] = plotTab
 
-        self.load_plot(place, plotCount)
+        self.load_plot(place, plotCount, figure)
     
 
-    def load_plot(self, position, tab_number):
+    def load_plot(self, position, tab_number, figure):
         analyzer = self.get_current_analyzer()
         #plotCount = self.project.config["analyzers"][analyzer][f"{position}_plot_count"]
         current_tab = self.project.analyzers[analyzer].ui_elements_config[f"{position}_tabs"].get(f"tab_{tab_number}")
@@ -265,18 +280,24 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
             else:
                 print(f"{position}Plot_{tab_number} not found")
 
-        figure = Figure(figsize=(4, 3), dpi=100)
-        axes = figure.gca()
+        print(figure.config)
+        if "distribution" in figure.config["plot_type"] and figure.config["plot_type"]["distribution"]["histogram"]["activated"]:
+            fig = figure.plot_relevance_score_distribution(self.project, analyzer, range(self.project.number_of_classes))
+        elif "distribution" in figure.config["plot_type"] and figure.config["plot_type"]["distribution"]["box_plot"]["activated"]:
+            fig = figure.plot_grouped_boxplot(self.project, 0,  analyzer)
+        else:
+            fig = plt.figure()
+            axes = fig.gca()
 
-        x = np.linspace(1, 10)
-        y = np.linspace(1, 10)
-        y1 = np.linspace(11, 20)
-        axes.plot(x, y, "-k", label="first one")
-        axes.plot(x, y1, "-b", label="second one")
-        axes.legend()
-        axes.grid(True)
+            x = np.linspace(1, 10)
+            y = np.linspace(1, 10)
+            y1 = np.linspace(11, 20)
+            axes.plot(x, y, "-k", label="first one")
+            axes.plot(x, y1, "-b", label="second one")
+            axes.legend()
+            axes.grid(True)
 
-        canvas = FigureCanvas(figure)
+        canvas = FigureCanvas(fig)
         scene.addWidget(canvas)
         current_plot.show()
 

@@ -4,12 +4,13 @@ class Analyzer():
             setattr(self, key, value)
         self.activation = None
         self.innvestigate_analyzer = None
+        self.analyzer_output = None
         self.ui_elements_config = {
                     "upper_plot_count": 0,
                     "bottom_plot_count": 0,
-                    "upper_tabs": {},
+                    "upper_tabs": {}, # QWidget() elements
                     "bottom_tabs": {},
-                    "upper_figures": [],
+                    "upper_figures": [], #own Figures_() objects
                     "bottom_figures": []
                 }
         

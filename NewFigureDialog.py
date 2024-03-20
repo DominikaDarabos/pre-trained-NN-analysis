@@ -68,21 +68,23 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
                 figure.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["line"] = self.averageAnalyzerLineRadio_2.isChecked()
         elif self.plotTypeCombo.currentText() == "Distribution":
             figure.add_default_distribution()
+            print("id bejövök")
             if self.boxRadio.isChecked():
-                figure.config["plot_type"]["distribution"]["box_plot"]["avtivated"] = True
+                figure.config["plot_type"]["distribution"]["box_plot"]["activated"] = True
                 if self.numOfBinsInput.text().isnumeric():
                     figure.config["plot_type"]["distribution"]["box_plot"]["num_of_bins"] = int(self.numOfBinsInput.text())
                 else:
                     figure.config["plot_type"]["distribution"]["box_plot"]["num_of_bins"] = 30
             if self.histRadio.isChecked():
-                figure.config["plot_type"]["distribution"]["histogram"]["avtivated"] = True
+                print(figure.config["plot_type"]["distribution"]["histogram"]["activated"])
+                figure.config["plot_type"]["distribution"]["histogram"]["activated"] = True
                 if self.analyzerRadio.isChecked():
                     figure.config["plot_type"]["distribution"]["histogram"]["analyzer_relevance_scores"]["activated"] = True
                     figure.config["plot_type"]["distribution"]["histogram"]["analyzer_relevance_scores"]["show_all_class"] = self.analyzerRadio.isChecked()
                 if self.inputRadio.isChecked():
                     figure.config["plot_type"]["distribution"]["histogram"]["input"]["activated"] = True
                     figure.config["plot_type"]["distribution"]["histogram"]["input"]["show_all_class"] = self.inputRadio.isChecked()
-        
+                print(figure.config["plot_type"]["distribution"]["histogram"]["activated"])
         if self.place == 0:
             self.app.create_new_comparison_figure("upper", figure)
             analyzer = self.app.get_current_analyzer()
