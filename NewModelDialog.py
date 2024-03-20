@@ -2,6 +2,7 @@ from PySide6 import QtWidgets
 from utils import main, new_model
 from Project import Project
 import re
+from Analyzer import Analyzer
 
 activations = {
     "None": "all",
@@ -27,7 +28,7 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
         #self.main_window.showMaximized()  # Show the main window
         self.app.set_shadow_effect(enabled=False)
         self.collect_selected_analyzers()
-        self.app.add_project(self.project)
+        self.app.project = self.project
         self.app.load_start_window()
     
     def select_model_dialog(self):
@@ -56,6 +57,7 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
     
     def collect_selected_analyzers(self):
         # Get checked state of checkboxes
+        """
         self.project.config["analyzers"]["IG"]["checked"]            = self.checkBox_IG.isChecked()
         self.project.config["analyzers"]["LRP_Z"]["checked"]         = self.checkBox_LRP_Z.isChecked()
         self.project.config["analyzers"]["LRP_AB"]["checked"]        = self.checkBox_LRP_AB.isChecked()
@@ -65,15 +67,19 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
         self.project.config["analyzers"]["LRP_Z"]["activation"]          = activations[self.comboBox_LRP_Z.currentText()]
         self.project.config["analyzers"]["LRP_AB"]["activation"]         = activations[self.comboBox_LRP_AB.currentText()]
         self.project.config["analyzers"]["LRP_Epsilon"]["activation"]    = activations[self.comboBox_LRP_Epsilon.currentText()]
-
-        alphaBetaString = self.AlphaBetaComboBox.currentText()
-        numbers_as_strings = re.findall(r'\d+', alphaBetaString)
-        numbers_as_integers = [int(num_str) for num_str in numbers_as_strings]
-        self.project.config["analyzers"]["LRP_AB"]["alpha"] = numbers_as_integers[0]
-        self.project.config["analyzers"]["LRP_AB"]["beta"] = numbers_as_integers[1]
-        eps_input = self.EpsilonInput.text()
-        if eps_input.isnumeric():
-            self.project.config["analyzers"]["LRP_Epsilon"]["epsilon"] = float(self.EpsilonInput.text())
-        else:
-            #TODO: pop up error window
-            self.project.config["analyzers"]["LRP_Epsilon"]["checked"] = False
+        """
+        if self.checkBox_IG.isChecked():
+            self.project.analyzers["IG"] = Analyzer(reference_input = 0, steps = 64)
+            self.project.analyzers["IG"].activation = activations[self.comboBox_IG.currentText()]
+        if self.checkBox_LRP_Z.isChecked():
+            self.project.analyzers["LRP_Z"] = Analyzer()
+            self.project.analyzers["LRP_Z"].activation = activations[self.comboBox_LRP_Z.currentText()]
+        if self.checkBox_LRP_AB.isChecked():
+            alphaBetaString = self.AlphaBetaComboBox.currentText()
+            numbers_as_strings = re.findall(r'\d+', alphaBetaString)
+            numbers_as_integers = [int(num_str) for num_str in numbers_as_strings]
+            self.project.analyzers["LRP_AB"] =  Analyzer(alpha = numbers_as_integers[0], beta = numbers_as_integers[1])
+            self.project.analyzers["LRP_AB"].activation = activations[self.comboBox_LRP_AB.currentText()]
+        if self.checkBox_LRP_Epsilon.isChecked() and self.EpsilonInput.text().isnumeric():
+            self.project.analyzers["LRP_Epsilon"] = Analyzer(epsilon = float(self.EpsilonInput.text()))
+            self.project.analyzers["LRP_Epsilon"].activation = activations[self.comboBox_LRP_Epsilon.currentText()]

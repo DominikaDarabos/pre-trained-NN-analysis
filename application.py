@@ -42,7 +42,7 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         self.setWindowTitle("Analyzer application")
         self.effect = QtWidgets.QGraphicsOpacityEffect(self)
         self.set_shadow_effect(enabled=True)
-        self.projects = []
+        self.project = None
 
         self.upper_new_plot_button.clicked.connect(self.show_create_figure_dialog)
         self.bottom_new_plot_button.clicked.connect(self.show_create_figure_dialog)
@@ -52,17 +52,16 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
 
     # add elements to side menu bar
     def populate_list_widget(self):
-        sideMenuElements = [analyzer for analyzer, values in self.projects[0].config["analyzers"].items() if values["checked"]]
+        sideMenuElements = [analyzer for analyzer in self.project.analyzers.keys()]
         self.listWidget.addItems(sideMenuElements)
-        print(self.projects[0].config)
 
         self.model_file_path = None
         self.custom_object_file_path = None
         self.input_file_path = None
     
     def load_files(self):
-        if os.path.isfile(self.projects[0].custom_object_file_path):
-            file_path = self.projects[0].custom_object_file_path
+        if os.path.isfile(self.project.custom_object_file_path):
+            file_path = self.project.custom_object_file_path
             splitted_path = file_path.split("/")
             class_name = splitted_path[-1].split(".")[0]
 
@@ -79,15 +78,16 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
             custom_objects[class_name] = my_class
 
             print("Successfully loaded custom object file")
-        if os.path.isfile(self.projects[0].model_file_path):
-            self.projects[0].model = tf.keras.models.load_model(self.projects[0].model_file_path, custom_objects=custom_objects)
-            self.projects[0].model_wo_softmax = innvestigate.model_wo_softmax(self.projects[0].model)
+        if os.path.isfile(self.project.model_file_path):
+            self.project.model = tf.keras.models.load_model(self.project.model_file_path, custom_objects=custom_objects)
+            self.project.model_wo_softmax = innvestigate.model_wo_softmax(self.project.model)
             print("Successfully loaded model file")
-        if os.path.isfile(self.projects[0].input_file_path):
-            with h5py.File(self.projects[0].input_file_path, 'r') as hf:
-                self.projects[0].test_x = hf['test_x'][:]
-                self.projects[0].test_y = hf['test_y'][:]
-            self.projects[0].number_of_classes = self.projects[0].test_y.shape[1]
+        if os.path.isfile(self.project.input_file_path):
+            with h5py.File(self.project.input_file_path, 'r') as hf:
+                self.project.test_x = hf['test_x'][:]
+                self.project.test_y = hf['test_y'][:]
+                self.project.predictions = self.project.model.predict(self.project.test_x, verbose = 2)
+            self.project.number_of_classes = self.project.test_y.shape[1]
             print("Successfully loaded input file")
 
     def set_shadow_effect(self, enabled=True):
@@ -97,22 +97,19 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
             self.setGraphicsEffect(self.effect)
         else:
             self.effect.setEnabled(False)
-
-    def add_project(self, project):
-        self.projects.append(project)
     
     def on_sidemenu_clicked(self, item):
         self.upperPlotTabWidget.clear()
         self.bottomPlotTabWidget.clear()
         analyzer = self.get_current_analyzer()
-        upperPlotCount = self.projects[0].config["analyzers"][analyzer]["upper_plot_count"]
+        upperPlotCount = self.project.analyzers[analyzer].ui_elements_config["upper_plot_count"]
         for tab_idx in range(upperPlotCount):
-            upperPlot = self.projects[0].config["analyzers"][analyzer]["upper_tabs"][f"tab_{tab_idx}"]
+            upperPlot = self.project.analyzers[analyzer].ui_elements_config["upper_tabs"][f"tab_{tab_idx}"]
             self.upperPlotTabWidget.addTab(upperPlot, f"Tab {tab_idx + 1}")
             self.load_plot("upper", tab_idx)
-        bottomPlotCount = self.projects[0].config["analyzers"][analyzer]["bottom_plot_count"]
+        bottomPlotCount = self.project.analyzers[analyzer].ui_elements_config["bottom_plot_count"]
         for tab_idx in range(bottomPlotCount):
-            bottomPlot = self.projects[0].config["analyzers"][analyzer]["bottom_tabs"][f"tab_{tab_idx}"]
+            bottomPlot = self.project.analyzers[analyzer].ui_elements_config["bottom_tabs"][f"tab_{tab_idx}"]
             self.bottomPlotTabWidget.addTab(bottomPlot, f"Tab {tab_idx + 1}")
             self.load_plot("bottom", tab_idx)
     
@@ -121,16 +118,15 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         self.load_files()
         self.populate_analyzers()
         self.inputDataInfo.clear()
-        self.inputDataInfo.append(f"Shape: {self.projects[0].test_x.shape}")
-        self.inputDataInfo.append(f"Type: {type(self.projects[0].test_x)}")
-        self.inputDataInfo.append(f"First element:\n{self.projects[0].test_x[:1]}")
+        self.inputDataInfo.append(f"Shape: {self.project.test_x.shape}")
+        self.inputDataInfo.append(f"Type: {type(self.project.test_x)}")
+        self.inputDataInfo.append(f"First element:\n{self.project.test_x[:1]}")
         self.inputDataInfo.append("---")
-        #self.inputDataInfo.append(str(self.projects[0].config["analyzers"]["LRP_Z"]["analyzer"].analyze(self.projects[0].test_x)))
 
         self.outputDataInfo.clear()
-        self.outputDataInfo.append(f"Shape: {self.projects[0].test_y.shape}")
-        self.outputDataInfo.append(f"Type: {type(self.projects[0].test_y)}")
-        self.outputDataInfo.append(f"First five element:\n{self.projects[0].test_y[:5]}")
+        self.outputDataInfo.append(f"Shape: {self.project.test_y.shape}")
+        self.outputDataInfo.append(f"Type: {type(self.project.test_y)}")
+        self.outputDataInfo.append(f"First five element:\n{self.project.test_y[:5]}")
         self.outputDataInfo.append("---")
         self.listWidget.setCurrentRow(0)
         self.listWidget.itemClicked.connect(self.on_sidemenu_clicked)
@@ -138,7 +134,7 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         sys.stdout = io.StringIO()
 
         # Get the model summary
-        self.projects[0].model.summary()
+        self.project.model.summary()
 
         # Get the captured output
         model_summary = sys.stdout.getvalue()
@@ -158,38 +154,38 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         elif sender_button == self.bottom_new_plot_button:
             qt_dialog = NewFigureDialog(self, place = 1)
             qt_dialog.exec_()
-    
+
     def populate_analyzers(self):
         ### create IG ###
-        if self.projects[0].config["analyzers"]["IG"]["checked"]:
-            self.projects[0].config["analyzers"]["IG"]["analyzer"] = \
-                innvestigate.create_analyzer("integrated_gradients", self.projects[0].model_wo_softmax,\
-                neuron_selection_mode=self.projects[0].config["analyzers"]["IG"]["activation"],\
-                reference_inputs=0, steps = 64)
+        if "IG" in self.project.analyzers:
+            self.project.analyzers["IG"].innvestigate_analyzer = \
+                innvestigate.create_analyzer("integrated_gradients", self.project.model_wo_softmax,\
+                neuron_selection_mode=self.project.analyzers["IG"].activation,\
+                reference_inputs= self.project.analyzers["IG"].reference_input, steps = self.project.analyzers["IG"].steps)
         ### create LRP_Z
-        if self.projects[0].config["analyzers"]["LRP_Z"]["checked"]:
-            self.projects[0].config["analyzers"]["LRP_Z"]["analyzer"] = \
-                innvestigate.create_analyzer("lrp.z", self.projects[0].model, disable_model_checks=True,\
-                neuron_selection_mode=self.projects[0].config["analyzers"]["LRP_Z"]["activation"])
+        if "LRP_Z" in self.project.analyzers:
+            self.project.analyzers["LRP_Z"].innvestigate_analyzer = \
+                innvestigate.create_analyzer("lrp.z", self.project.model, disable_model_checks=True,\
+                neuron_selection_mode=self.project.analyzers["LRP_Z"].activation)
         ### create LRP_EPSILON ###
-        if self.projects[0].config["analyzers"]["LRP_Epsilon"]["checked"]:
-            self.projects[0].config["analyzers"]["LRP_Epsilon"]["analyzer"] = \
-                innvestigate.create_analyzer("lrp.epsilon", self.projects[0].model,\
-                disable_model_checks=True, neuron_selection_mode=self.projects[0].config["analyzers"]["LRP_Epsilon"]["activation"],\
-                **{"epsilon": self.projects[0].config["analyzers"]["LRP_Epsilon"]["epsilon"]})
-        if self.projects[0].config["analyzers"]["LRP_AB"]["checked"]:
-            if self.projects[0].config["analyzers"]["LRP_AB"]["alpha"] == 1 and self.projects[0].config["analyzers"]["LRP_AB"]["beta"] == 0:
-                self.projects[0].config["analyzers"]["LRP_AB"]["analyzer"] = \
-                    innvestigate.create_analyzer("lrp.alpha_1_beta_0", self.projects[0].model,\
-                    disable_model_checks=True, neuron_selection_mode=self.projects[0].config["analyzers"]["LRP_AB"]["activation"])
-            if self.projects[0].config["analyzers"]["LRP_AB"]["alpha"] == 2 and self.projects[0].config["analyzers"]["LRP_AB"]["beta"] == 1:
-                self.projects[0].config["analyzers"]["LRP_AB"]["analyzer"] = \
-                    innvestigate.create_analyzer("lrp.alpha_2_beta_1", self.projects[0].model,\
-                    disable_model_checks=True, neuron_selection_mode=self.projects[0].config["analyzers"]["LRP_AB"]["activation"])
+        if "LRP_Epsilon" in self.project.analyzers:
+            self.project.analyzers["LRP_Epsilon"].innvestigate_analyzer = \
+                innvestigate.create_analyzer("lrp.epsilon", self.project.model,\
+                disable_model_checks=True, neuron_selection_mode=self.project.analyzers["LRP_Epsilon"].activation,\
+                **{"epsilon": self.project.analyzers["LRP_Epsilon"].epsilon})
+        if "LRP_AB" in self.project.analyzers:
+            if self.project.analyzers["LRP_AB"].alpha == 1 and self.project.analyzers["LRP_AB"].beta == 0:
+                self.project.analyzers["LRP_AB"].innvestigate_analyzer = \
+                    innvestigate.create_analyzer("lrp.alpha_1_beta_0", self.project.model,\
+                    disable_model_checks=True, neuron_selection_mode=self.project.analyzers["LRP_AB"].activation)
+            if self.project.analyzers["LRP_AB"].alpha == 2 and self.project.analyzers["LRP_AB"].beta == 1:
+                self.project.analyzers["LRP_AB"].innvestigate_analyzer = \
+                    innvestigate.create_analyzer("lrp.alpha_2_beta_1", self.project.model,\
+                    disable_model_checks=True, neuron_selection_mode=self.project.analyzers["LRP_AB"].activation)
     
     def create_new_comparison_figure(self, place, figure):
         analyzer = self.get_current_analyzer()
-        plotCount = self.projects[0].config["analyzers"][analyzer][f"{place}_plot_count"]
+        plotCount = self.project.analyzers[analyzer].ui_elements_config[f"{place}_plot_count"]
 
         plotTab = QWidget()
         plotTab.setObjectName(f"{place}PlotTab_{plotCount}")
@@ -248,19 +244,19 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         
         if place == "upper":
             self.upperPlotTabWidget.addTab(plotTab, f"Tab {plotCount + 1}")
-            self.projects[0].increase_upper_plot_count(analyzer)
+            self.project.analyzers[analyzer].increase_upper_plot_count()
         if place == "bottom":
             self.bottomPlotTabWidget.addTab(plotTab, f"Tab {plotCount + 1}")
-            self.projects[0].increase_bottom_plot_count(analyzer)
-        self.projects[0].config["analyzers"][analyzer][f"{place}_tabs"][f"tab_{plotCount}"] = plotTab
+            self.project.analyzers[analyzer].increase_bottom_plot_count()
+        self.project.analyzers[analyzer].ui_elements_config[f"{place}_tabs"][f"tab_{plotCount}"] = plotTab
 
         self.load_plot(place, plotCount)
     
 
     def load_plot(self, position, tab_number):
         analyzer = self.get_current_analyzer()
-        #plotCount = self.projects[0].config["analyzers"][analyzer][f"{position}_plot_count"]
-        current_tab = self.projects[0].config["analyzers"][analyzer][f"{position}_tabs"].get(f"tab_{tab_number}")
+        #plotCount = self.project.config["analyzers"][analyzer][f"{position}_plot_count"]
+        current_tab = self.project.analyzers[analyzer].ui_elements_config[f"{position}_tabs"].get(f"tab_{tab_number}")
         if current_tab:
             scene = QtWidgets.QGraphicsScene()
             current_plot = current_tab.findChild(QtWidgets.QGraphicsView, f"{position}Plot_{tab_number}")

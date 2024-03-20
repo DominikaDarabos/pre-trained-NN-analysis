@@ -86,17 +86,17 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
         if self.place == 0:
             self.app.create_new_comparison_figure("upper", figure)
             analyzer = self.app.get_current_analyzer()
-            self.app.projects[0].config["analyzers"][analyzer][f"upper_figures"].append(figure)
+            self.app.project.analyzers[analyzer].ui_elements_config[f"upper_figures"].append(figure)
 
-            currentcount = self.app.projects[0].config["analyzers"][analyzer][f"upper_plot_count"]
-            print(self.app.projects[0].config["analyzers"][analyzer][f"upper_figures"][currentcount-1])
+            currentcount = self.app.project.analyzers[analyzer].ui_elements_config[f"upper_plot_count"]
+            print(self.app.project.analyzers[analyzer].ui_elements_config[f"upper_figures"][currentcount-1])
         elif self.place == 1:
             self.app.create_new_comparison_figure("bottom", figure)
             analyzer = self.app.get_current_analyzer()
-            self.app.projects[0].config["analyzers"][analyzer][f"bottom_figures"].append(figure)
+            self.app.project.analyzers[analyzer].ui_elements_config[f"bottom_figures"].append(figure)
 
-            currentcount = self.app.projects[0].config["analyzers"][analyzer][f"bottom_plot_count"]
-            print(self.app.projects[0].config["analyzers"][analyzer][f"bottom_figures"][currentcount-1])
+            currentcount = self.app.project.analyzers[analyzer].ui_elements_config[f"bottom_plot_count"]
+            print(self.app.project.analyzers[analyzer].ui_elements_config[f"bottom_figures"][currentcount-1])
         self.accept()
 
 
