@@ -45,6 +45,10 @@ class Project():
     def get_correct_prediction_indices(self):
         predicted_labels = np.argmax(self.predictions, axis=1)
         return np.where(predicted_labels == np.argmax(self.test_y, axis=1))[0]
+    
+    def get_correct_pred_indices_for_class(self, class_num):
+        return np.union1d(self.get_correct_pos_prediction_indices_for_class(class_num),\
+                           self.get_correct_neg_prediction_indices_for_class(class_num))
 
     def get_incorrect_prediction_indices(self):
         predicted_labels = np.argmax(self.predictions, axis=1)

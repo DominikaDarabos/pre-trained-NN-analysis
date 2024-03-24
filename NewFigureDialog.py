@@ -1,6 +1,6 @@
 from PySide6 import QtWidgets
 from utils import create_new_figure
-from PySide6.QtWidgets import  QLabel, QFrame, QGridLayout, QCheckBox, QRadioButton, QLineEdit
+from PySide6.QtWidgets import  QLabel, QFrame, QVBoxLayout, QGridLayout, QCheckBox, QRadioButton, QLineEdit
 from PySide6.QtCore import QSize, QCoreApplication
 
 from Figure import Figure_
@@ -46,7 +46,7 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
     
     def create_figure(self):
         figure = Figure_()
-        figure.config["class"] = self.classCombo.currentText().lower()
+        figure.config["class"] = self.classCombo.currentText()
         figure.config["prediction_quality"] = self.predQualCombo.currentText().lower().replace(" ", "_")
         if self.plotTypeCombo.currentText() == "Comparison":
             figure.add_default_comparison()
@@ -68,22 +68,25 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
                 figure.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["line"] = self.averageAnalyzerLineRadio_2.isChecked()
         elif self.plotTypeCombo.currentText() == "Distribution":
             figure.add_default_distribution()
-            print("id bejövök")
             if self.boxRadio.isChecked():
                 figure.config["plot_type"]["distribution"]["box_plot"]["activated"] = True
-                if self.numOfBinsInput.text().isnumeric():
-                    figure.config["plot_type"]["distribution"]["box_plot"]["num_of_bins"] = int(self.numOfBinsInput.text())
+                if self.boxEveryN.text().isnumeric():
+                    figure.config["plot_type"]["distribution"]["box_plot"]["sample_frequency"] = int(self.boxEveryN.text())
                 else:
-                    figure.config["plot_type"]["distribution"]["box_plot"]["num_of_bins"] = 30
+                    figure.config["plot_type"]["distribution"]["box_plot"]["sample_frequency"] = 4
             if self.histRadio.isChecked():
                 print(figure.config["plot_type"]["distribution"]["histogram"]["activated"])
                 figure.config["plot_type"]["distribution"]["histogram"]["activated"] = True
+                if self.histNumOfBins.text().isnumeric():
+                    figure.config["plot_type"]["distribution"]["histogram"]["num_of_bins"] = int(self.histNumOfBins.text())
+                else:
+                    figure.config["plot_type"]["distribution"]["histogram"]["num_of_bins"] = 30
                 if self.analyzerRadio.isChecked():
                     figure.config["plot_type"]["distribution"]["histogram"]["analyzer_relevance_scores"]["activated"] = True
-                    figure.config["plot_type"]["distribution"]["histogram"]["analyzer_relevance_scores"]["show_all_class"] = self.analyzerRadio.isChecked()
+                    figure.config["plot_type"]["distribution"]["histogram"]["analyzer_relevance_scores"]["show_all_class"] = self.showAllAnalyzerRadio.isChecked()
                 if self.inputRadio.isChecked():
                     figure.config["plot_type"]["distribution"]["histogram"]["input"]["activated"] = True
-                    figure.config["plot_type"]["distribution"]["histogram"]["input"]["show_all_class"] = self.inputRadio.isChecked()
+                    figure.config["plot_type"]["distribution"]["histogram"]["input"]["show_all_class"] = self.showAllInputRadio.isChecked()
                 print(figure.config["plot_type"]["distribution"]["histogram"]["activated"])
         if self.place == 0:
             self.app.create_new_comparison_figure("upper", figure)
@@ -253,9 +256,9 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
         self.boxRadio = QRadioButton(self.boxFrame)
         self.boxRadio.setObjectName(u"boxRadio")
         self.gridLayout_6.addWidget(self.boxRadio, 0, 0, 1, 1)
-        self.numOfBinsInput = QLineEdit(self.boxFrame)
-        self.numOfBinsInput.setObjectName(u"numOfBinsInput")
-        self.gridLayout_6.addWidget(self.numOfBinsInput, 1, 0, 1, 1)
+        self.boxEveryN = QLineEdit(self.boxFrame)
+        self.boxEveryN.setObjectName(u"boxEveryN")
+        self.gridLayout_6.addWidget(self.boxEveryN, 1, 0, 1, 1)
         self.gridLayout_2.addWidget(self.boxFrame, 1, 0, 1, 1)
         self.histFrame = QFrame(self.baseFrame_2)
         self.histFrame.setObjectName(u"histFrame")
@@ -263,36 +266,57 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
         self.histFrame.setFrameShadow(QFrame.Raised)
         self.gridLayout_3 = QGridLayout(self.histFrame)
         self.gridLayout_3.setObjectName(u"gridLayout_3")
-        self.histRadio = QRadioButton(self.histFrame)
-        self.histRadio.setObjectName(u"histRadio")
-        self.gridLayout_3.addWidget(self.histRadio, 0, 0, 1, 1)
+
         self.histDetailesFrame = QFrame(self.histFrame)
         self.histDetailesFrame.setObjectName(u"histDetailesFrame")
         self.histDetailesFrame.setFrameShape(QFrame.StyledPanel)
         self.histDetailesFrame.setFrameShadow(QFrame.Raised)
         self.gridLayout_5 = QGridLayout(self.histDetailesFrame)
         self.gridLayout_5.setObjectName(u"gridLayout_5")
-        self.analyzerRadio = QRadioButton(self.histDetailesFrame)
+        self.frame = QFrame(self.histDetailesFrame)
+        self.frame.setObjectName(u"frame")
+        self.frame.setFrameShape(QFrame.StyledPanel)
+        self.frame.setFrameShadow(QFrame.Raised)
+        self.verticalLayout = QVBoxLayout(self.frame)
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.analyzerRadio = QRadioButton(self.frame)
         self.analyzerRadio.setObjectName(u"analyzerRadio")
-        self.gridLayout_5.addWidget(self.analyzerRadio, 0, 0, 1, 1)
-        #self.analyzerRadio = QRadioButton(self.histDetailesFrame)
-        #self.analyzerRadio.setObjectName(u"analyzerRadio")
-        #self.gridLayout_5.addWidget(self.analyzerRadio, 0, 1, 1, 1)
-        self.inputRadio = QRadioButton(self.histDetailesFrame)
+        self.verticalLayout.addWidget(self.analyzerRadio)
+        self.inputRadio = QRadioButton(self.frame)
         self.inputRadio.setObjectName(u"inputRadio")
-        self.gridLayout_5.addWidget(self.inputRadio, 1, 0, 1, 1)
-        #self.inputRadio = QRadioButton(self.histDetailesFrame)
-        #self.inputRadio.setObjectName(u"inputRadio")
-        #self.gridLayout_5.addWidget(self.inputRadio, 1, 1, 1, 1)
-        self.gridLayout_3.addWidget(self.histDetailesFrame, 1, 0, 1, 1)
+        self.verticalLayout.addWidget(self.inputRadio)
+        self.gridLayout_5.addWidget(self.frame, 0, 0, 1, 1)
+        self.frame_2 = QFrame(self.histDetailesFrame)
+        self.frame_2.setObjectName(u"frame_2")
+        self.frame_2.setFrameShape(QFrame.StyledPanel)
+        self.frame_2.setFrameShadow(QFrame.Raised)
+        self.verticalLayout_2 = QVBoxLayout(self.frame_2)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.showAllAnalyzerRadio = QRadioButton(self.frame_2)
+        self.showAllAnalyzerRadio.setObjectName(u"showAllAnalyzerRadio")
+        self.verticalLayout_2.addWidget(self.showAllAnalyzerRadio)
+        self.showAllInputRadio = QRadioButton(self.frame_2)
+        self.showAllInputRadio.setObjectName(u"showAllInputRadio")
+        self.verticalLayout_2.addWidget(self.showAllInputRadio)
+        self.gridLayout_5.addWidget(self.frame_2, 0, 1, 1, 1)
+        self.gridLayout_3.addWidget(self.histDetailesFrame, 2, 0, 1, 1)
+        self.histRadio = QRadioButton(self.histFrame)
+        self.histRadio.setObjectName(u"histRadio")
+
+        self.gridLayout_3.addWidget(self.histRadio, 0, 0, 1, 1)
+
+        self.histNumOfBins = QLineEdit(self.histFrame)
+        self.histNumOfBins.setObjectName(u"histNumOfBins")
+
+        self.gridLayout_3.addWidget(self.histNumOfBins, 1, 0, 1, 1)
         self.gridLayout_2.addWidget(self.histFrame, 2, 0, 1, 1)
         self.gridLayout.addWidget(self.baseFrame_2, 0, 1, 1, 1)
-
         self.figureTypeTitle.setText(QCoreApplication.translate("Dialog", u"Figure type", None))
         self.boxRadio.setText(QCoreApplication.translate("Dialog", u"Box plot", None))
-        self.numOfBinsInput.setText(QCoreApplication.translate("Dialog", u"Number of bins", None))
+        self.boxEveryN.setText(QCoreApplication.translate("Dialog", u"Sample frequency", None))
         self.histRadio.setText(QCoreApplication.translate("Dialog", u"Histogram", None))
         self.analyzerRadio.setText(QCoreApplication.translate("Dialog", u"Analyzer relevance scores", None))
-        #self.analyzerRadio.setText(QCoreApplication.translate("Dialog", u"Show all class", None))
+        self.showAllAnalyzerRadio.setText(QCoreApplication.translate("Dialog", u"Show all class", None))
         self.inputRadio.setText(QCoreApplication.translate("Dialog", u"Input", None))
-        #self.inputRadio.setText(QCoreApplication.translate("Dialog", u"Show all class", None))
+        self.showAllInputRadio.setText(QCoreApplication.translate("Dialog", u"Show all class", None))
+        self.histNumOfBins.setText(QCoreApplication.translate("baseLayout", u"Number of bins", None))

@@ -40,10 +40,11 @@ class Figure_():
         self.config["plot_type"]["distribution"] = {
                     "box_plot":{
                         "activated": False,
-                        "num_of_bins": 0
+                        "sample_frequency": 0
                     },
                     "histogram":{
                         "activated": False,
+                        "num_of_bins": 0,
                         "analyzer_relevance_scores":{
                             "activated": False,
                             "show_all_class": False
@@ -61,7 +62,7 @@ class Figure_():
     def is_distribution(self):
         return ("distribution" in self.config["plot_type"])
 
-    def plot_relevance_score_distribution(self, project, analyzer, class_nums):
+    def plot_relevance_score_distribution(self, project, analyzer):
         """
         Avarage relevance scores over class
 
@@ -69,12 +70,21 @@ class Figure_():
         The plot visualize all the classes' analyzer outcomes' distribution
         Classes seperated by the gorund truth labels
         """
-        if class_nums == "all":
-            classes = [f"Class_{num+1}" for num in range(project.number_of_classes)]
-            possible_classes = range(project.number_of_classes)
-        else:
-            classes = [f"Class_{num}" for num in class_nums]
-            possible_classes = class_nums
+        analyzer_ = False
+        input_ = False
+        if self.config["plot_type"]["distribution"]["histogram"]["analyzer_relevance_scores"]["activated"]:
+            analyzer_ = True
+            if self.config["plot_type"]["distribution"]["histogram"]["analyzer_relevance_scores"]["show_all_class"]:
+                possible_classes = range(project.number_of_classes)
+            else:
+                possible_classes = [int(self.config["class"])]
+        elif self.config["plot_type"]["distribution"]["histogram"]["input"]["activated"]:
+            input_ = True
+            if self.config["plot_type"]["distribution"]["histogram"]["input"]["show_all_class"]:
+                possible_classes = range(project.number_of_classes)
+            else:
+                possible_classes = [int(self.config["class"])]
+
         fig = plt.figure()
         ax = fig.add_subplot(111)
         colors=['red', 'dimgray', 'lightgray']
@@ -82,12 +92,31 @@ class Figure_():
         
     # Create the histogram plot
         for class_num in possible_classes:
-            class_indices = project.get_truth_class_indices(class_num)
+            print("QUALITY: ",  self.config["prediction_quality"])
+            if self.config["prediction_quality"] == "ground_truth":
+                class_indices = project.get_truth_class_indices(class_num)
+            elif self.config["prediction_quality"] == "correct":
+                #TODO: will be the same for all class
+                class_indices = project.get_correct_pred_indices_for_class(class_num)
+            elif self.config["prediction_quality"] == "incorrect":
+                class_indices = project.get_incorrect_prediction_indices_for_class(class_num)
+            elif self.config["prediction_quality"] == "false_negative":
+                class_indices = project.get_false_negative_indices(class_num)
+            elif self.config["prediction_quality"] == "false_positive":
+                class_indices = project.get_false_positive_indices(class_num)
+            else:
+                class_indices = []
+
             class_values = project.test_x[class_indices]
             analyzer_class = project.analyzers[analyzer].analyzer_output[class_indices]
+            print("CLASS NUM: ", class_num)
             if class_values.shape[0] == 0:
                 continue
-            ax.hist(analyzer_class.flatten(), bins=30, color=colors[class_num], alpha = alpha_val, label=classes[class_num])
+            bin_num = self.config["plot_type"]["distribution"]["histogram"]["num_of_bins"]
+            if analyzer_:
+                ax.hist(analyzer_class.flatten(), bins=bin_num, color=colors[class_num], alpha = alpha_val, label=f"Class_{class_num+1}")
+            elif input_:
+                ax.hist(class_values.flatten(), bins=bin_num, color=colors[class_num], alpha = alpha_val, label=f"Class_{class_num+1}")
         ax.set_title(analyzer, fontsize = 16)
         ax.title.set_size(10)
         ax.set_yscale("log")

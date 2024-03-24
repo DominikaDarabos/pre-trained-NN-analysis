@@ -11,6 +11,7 @@ import h5py
 import importlib.util
 import io
 import innvestigate
+from PySide6.QtWidgets import QSizePolicy
 
 from NewModelDialog import NewModelDialog
 from NewFigureDialog import NewFigureDialog
@@ -145,6 +146,15 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         # Append the model summary to self.modelInfo
         self.modelInfo.clear()
         self.modelInfo.append(model_summary)
+        self.upperPlotFrame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.bottomPlotFrame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        # Calculate half of the main window height
+        half_height = self.height() / 2
+        
+        # Set the fixed height for the frames
+        self.upperPlotFrame.setFixedHeight(half_height)
+        self.bottomPlotFrame.setFixedHeight(half_height)
     
     def show_create_figure_dialog(self):
         sender_button = self.sender()
@@ -282,7 +292,7 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
 
         print(figure.config)
         if "distribution" in figure.config["plot_type"] and figure.config["plot_type"]["distribution"]["histogram"]["activated"]:
-            fig = figure.plot_relevance_score_distribution(self.project, analyzer, range(self.project.number_of_classes))
+            fig = figure.plot_relevance_score_distribution(self.project, analyzer)
         elif "distribution" in figure.config["plot_type"] and figure.config["plot_type"]["distribution"]["box_plot"]["activated"]:
             fig = figure.plot_grouped_boxplot(self.project, 0,  analyzer)
         else:
