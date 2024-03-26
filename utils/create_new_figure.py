@@ -49,8 +49,6 @@ class Ui_Dialog(object):
         self.classTitle.setMaximumSize(QSize(16777215, 25))
         self.classLayout.addWidget(self.classTitle)
         self.classCombo = QComboBox(self.frame_2)
-        self.classCombo.addItem("")
-        self.classCombo.addItem("")
         self.classCombo.setObjectName(u"classCombo")
         self.classLayout.addWidget(self.classCombo)
         self.verticalLayout.addLayout(self.classLayout)
@@ -85,9 +83,6 @@ class Ui_Dialog(object):
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName(u"horizontalLayout")
 
-        self.resetButton = QPushButton(self.baseFrame)
-        self.resetButton.setObjectName(u"resetButton")
-        self.horizontalLayout.addWidget(self.resetButton)
         self.cancelButton = QPushButton(self.baseFrame)
         self.cancelButton.setObjectName(u"cancelButton")
         self.horizontalLayout.addWidget(self.cancelButton)
@@ -114,8 +109,6 @@ class Ui_Dialog(object):
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(QCoreApplication.translate("Dialog", u"Create new figure", None))
         self.classTitle.setText(QCoreApplication.translate("Dialog", u"Class", None))
-        self.classCombo.setItemText(1, QCoreApplication.translate("Dialog", u"0", None))
-        self.classCombo.setItemText(2, QCoreApplication.translate("Dialog", u"1", None))
 
         self.predQualTitle.setText(QCoreApplication.translate("Dialog", u"Prediction quality", None))
         self.predQualCombo.setItemText(0, QCoreApplication.translate("Dialog", u"Correct", None))
@@ -129,7 +122,6 @@ class Ui_Dialog(object):
         self.plotTypeCombo.setItemText(1, QCoreApplication.translate("Dialog", u"Distribution", None))
         self.plotTypeCombo.setItemText(2, "")
 
-        self.resetButton.setText(QCoreApplication.translate("Dialog", u"Reset", None))
         self.cancelButton.setText(QCoreApplication.translate("Dialog", u"Cancel", None))
         self.createButton.setText(QCoreApplication.translate("Dialog", u"Create", None))
     # retranslateUi

@@ -16,6 +16,8 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
         self.place = place
         self.plotTypeCombo.currentIndexChanged.connect(self.on_combobox_selection_change)
         self.createButton.clicked.connect(self.create_figure)
+        self.cancelButton.clicked.connect(self.close_window)
+        self.load_classes()
 
     def on_combobox_selection_change(self):
         selected_option = self.plotTypeCombo.currentText()
@@ -43,6 +45,17 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
                     widget.deleteLater()
                 else:
                     self.clear_frame(frame)
+
+    def load_classes(self):
+        num_of_classes = self.app.project.number_of_classes
+        for num in range(num_of_classes):
+            self.classCombo.addItem("")
+            self.classCombo.setItemText(num, QCoreApplication.translate("Dialog", str(num), None))
+
+
+
+    def close_window(self):
+        self.close()
     
     def create_figure(self):
         figure = Figure_()
@@ -51,21 +64,21 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
         if self.plotTypeCombo.currentText() == "Comparison":
             figure.add_default_comparison()
             if self.singleSampleCheckbox.isChecked():
-                figure.config["plot_type"]["comparison"]["channels"]["single_sample"]["activation"] = True
-                figure.config["plot_type"]["comparison"]["channels"]["single_sample"]["scatter"] = self.singleAnalyzerScatterRadio_2.isChecked()
-                figure.config["plot_type"]["comparison"]["channels"]["single_sample"]["line"] = self.singleSampleLineRadio_2.isChecked()
+                figure.config["plot_type"]["comparison"]["channels"]["single_sample"]["activated"] = True
+                figure.config["plot_type"]["comparison"]["channels"]["single_sample"]["scatter"] = self.singleSampleScatterRadio.isChecked()
+                figure.config["plot_type"]["comparison"]["channels"]["single_sample"]["line"] = self.singleSampleLineRadio.isChecked()
             if self.averageSampleCheckbox.isChecked():
-                figure.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["activation"] = True
-                figure.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["scatter"] = self.averageSampleScatterRadio_2.isChecked()
-                figure.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["line"] = self.averageSampleLineRadio_2.isChecked()
+                figure.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["activated"] = True
+                figure.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["scatter"] = self.averageSampleScatterRadio.isChecked()
+                figure.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["line"] = self.averageSampleLineRadio.isChecked()
             if self.singleAnalyzerCheckbox.isChecked():
-                figure.config["plot_type"]["comparison"]["channels"]["single_analyzer_score"]["activation"] = True
-                figure.config["plot_type"]["comparison"]["channels"]["single_analyzer_score"]["scatter"] = self.singleAnalyzerScatterRadio_2.isChecked()
-                figure.config["plot_type"]["comparison"]["channels"]["single_analyzer_score"]["line"] = self.singleAnalyzerLineRadio_2.isChecked()
+                figure.config["plot_type"]["comparison"]["channels"]["single_analyzer_score"]["activated"] = True
+                figure.config["plot_type"]["comparison"]["channels"]["single_analyzer_score"]["scatter"] = self.singleAnalyzerScatterRadio.isChecked()
+                figure.config["plot_type"]["comparison"]["channels"]["single_analyzer_score"]["line"] = self.singleAnalyzerLineRadio.isChecked()
             if self.averageAnalyzerCheckbox.isChecked():
-                figure.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["activation"] = True
-                figure.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["scatter"] = self.averageAnalyzerScatterRadio_2.isChecked()
-                figure.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["line"] = self.averageAnalyzerLineRadio_2.isChecked()
+                figure.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["activated"] = True
+                figure.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["scatter"] = self.averageAnalyzerScatterRadio.isChecked()
+                figure.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["line"] = self.averageAnalyzerLineRadio.isChecked()
         elif self.plotTypeCombo.currentText() == "Distribution":
             figure.add_default_distribution()
             if self.boxRadio.isChecked():
@@ -89,16 +102,16 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
                     figure.config["plot_type"]["distribution"]["histogram"]["input"]["show_all_class"] = self.showAllInputRadio.isChecked()
                 print(figure.config["plot_type"]["distribution"]["histogram"]["activated"])
         if self.place == 0:
-            self.app.create_new_comparison_figure("upper", figure)
             analyzer = self.app.get_current_analyzer()
             self.app.project.analyzers[analyzer].ui_elements_config[f"upper_figures"].append(figure)
-
+            self.app.create_new_comparison_figure("upper", figure)
+        
             currentcount = self.app.project.analyzers[analyzer].ui_elements_config[f"upper_plot_count"]
             print(self.app.project.analyzers[analyzer].ui_elements_config[f"upper_figures"][currentcount-1])
         elif self.place == 1:
-            self.app.create_new_comparison_figure("bottom", figure)
             analyzer = self.app.get_current_analyzer()
             self.app.project.analyzers[analyzer].ui_elements_config[f"bottom_figures"].append(figure)
+            self.app.create_new_comparison_figure("bottom", figure)
 
             currentcount = self.app.project.analyzers[analyzer].ui_elements_config[f"bottom_plot_count"]
             print(self.app.project.analyzers[analyzer].ui_elements_config[f"bottom_figures"][currentcount-1])
@@ -150,12 +163,12 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
         self.gridLayout_8.setSpacing(0)
         self.gridLayout_8.setObjectName(u"gridLayout_8")
         self.gridLayout_8.setContentsMargins(0, 0, 0, 0)
-        self.singleAnalyzerLineRadio_2 = QRadioButton(self.averageSampleFrame)
-        self.singleAnalyzerLineRadio_2.setObjectName(u"singleAnalyzerLineRadio_2")
-        self.gridLayout_8.addWidget(self.singleAnalyzerLineRadio_2, 0, 0, 1, 1)
-        self.singleAnalyzerScatterRadio_2 = QRadioButton(self.averageSampleFrame)
-        self.singleAnalyzerScatterRadio_2.setObjectName(u"singleAnalyzerScatterRadio_2")
-        self.gridLayout_8.addWidget(self.singleAnalyzerScatterRadio_2, 0, 1, 1, 1)
+        self.averageSampleScatterRadio = QRadioButton(self.averageSampleFrame)
+        self.averageSampleScatterRadio.setObjectName(u"averageSampleScatterRadio")
+        self.gridLayout_8.addWidget(self.averageSampleScatterRadio, 0, 0, 1, 1)
+        self.averageSampleLineRadio = QRadioButton(self.averageSampleFrame)
+        self.averageSampleLineRadio.setObjectName(u"averageSampleLineRadio")
+        self.gridLayout_8.addWidget(self.averageSampleLineRadio, 0, 1, 1, 1)
         self.gridLayout_4.addWidget(self.averageSampleFrame, 2, 0, 1, 1)
         self.singleAnalyzerFrame = QFrame(self.radioFrame)
         self.singleAnalyzerFrame.setObjectName(u"singleAnalyzerFrame")
@@ -165,12 +178,12 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
         self.gridLayout_9.setSpacing(0)
         self.gridLayout_9.setObjectName(u"gridLayout_9")
         self.gridLayout_9.setContentsMargins(0, 0, 0, 0)
-        self.averageAnalyzerScatterRadio_2 = QRadioButton(self.singleAnalyzerFrame)
-        self.averageAnalyzerScatterRadio_2.setObjectName(u"averageAnalyzerScatterRadio_2")
-        self.gridLayout_9.addWidget(self.averageAnalyzerScatterRadio_2, 0, 0, 1, 1)
-        self.averageAnalyzerLineRadio_2 = QRadioButton(self.singleAnalyzerFrame)
-        self.averageAnalyzerLineRadio_2.setObjectName(u"averageAnalyzerLineRadio_2")
-        self.gridLayout_9.addWidget(self.averageAnalyzerLineRadio_2, 0, 1, 1, 1)
+        self.singleAnalyzerScatterRadio = QRadioButton(self.singleAnalyzerFrame)
+        self.singleAnalyzerScatterRadio.setObjectName(u"singleAnalyzerScatterRadio")
+        self.gridLayout_9.addWidget(self.singleAnalyzerScatterRadio, 0, 0, 1, 1)
+        self.singleAnalyzerLineRadio = QRadioButton(self.singleAnalyzerFrame)
+        self.singleAnalyzerLineRadio.setObjectName(u"singleAnalyzerLineRadio")
+        self.gridLayout_9.addWidget(self.singleAnalyzerLineRadio, 0, 1, 1, 1)
         self.gridLayout_4.addWidget(self.singleAnalyzerFrame, 3, 0, 1, 1)
         self.singleSampleFrame = QFrame(self.radioFrame)
         self.singleSampleFrame.setObjectName(u"singleSampleFrame")
@@ -180,12 +193,12 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
         self.gridLayout_7.setSpacing(0)
         self.gridLayout_7.setObjectName(u"gridLayout_7")
         self.gridLayout_7.setContentsMargins(0, 0, 0, 0)
-        self.singleSampleLineRadio_2 = QRadioButton(self.singleSampleFrame)
-        self.singleSampleLineRadio_2.setObjectName(u"singleSampleLineRadio_2")
-        self.gridLayout_7.addWidget(self.singleSampleLineRadio_2, 0, 0, 1, 1)
-        self.singleSampleScatterRadio_2 = QRadioButton(self.singleSampleFrame)
-        self.singleSampleScatterRadio_2.setObjectName(u"singleSampleScatterRadio_2")
-        self.gridLayout_7.addWidget(self.singleSampleScatterRadio_2, 0, 1, 1, 1)
+        self.singleSampleScatterRadio = QRadioButton(self.singleSampleFrame)
+        self.singleSampleScatterRadio.setObjectName(u"singleSampleScatterRadio")
+        self.gridLayout_7.addWidget(self.singleSampleScatterRadio, 0, 0, 1, 1)
+        self.singleSampleLineRadio = QRadioButton(self.singleSampleFrame)
+        self.singleSampleLineRadio.setObjectName(u"singleSampleLineRadio")
+        self.gridLayout_7.addWidget(self.singleSampleLineRadio, 0, 1, 1, 1)
         self.gridLayout_4.addWidget(self.singleSampleFrame, 1, 0, 1, 1)
         self.labelFrame = QFrame(self.radioFrame)
         self.labelFrame.setObjectName(u"labelFrame")
@@ -212,12 +225,12 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
         self.gridLayout_10.setSpacing(0)
         self.gridLayout_10.setObjectName(u"gridLayout_10")
         self.gridLayout_10.setContentsMargins(0, 0, 0, 0)
-        self.averageSampleLineRadio_2 = QRadioButton(self.averageAnalyzerFrame)
-        self.averageSampleLineRadio_2.setObjectName(u"averageSampleLineRadio_2")
-        self.gridLayout_10.addWidget(self.averageSampleLineRadio_2, 0, 0, 1, 1)
-        self.averageSampleScatterRadio_2 = QRadioButton(self.averageAnalyzerFrame)
-        self.averageSampleScatterRadio_2.setObjectName(u"averageSampleScatterRadio_2")
-        self.gridLayout_10.addWidget(self.averageSampleScatterRadio_2, 0, 1, 1, 1)
+        self.averageAnalyzerScatterRadio = QRadioButton(self.averageAnalyzerFrame)
+        self.averageAnalyzerScatterRadio.setObjectName(u"averageAnalyzerScatterRadio")
+        self.gridLayout_10.addWidget(self.averageAnalyzerScatterRadio, 0, 0, 1, 1)
+        self.averageAnalyzerLineRadio = QRadioButton(self.averageAnalyzerFrame)
+        self.averageAnalyzerLineRadio.setObjectName(u"averageAnalyzerLineRadio")
+        self.gridLayout_10.addWidget(self.averageAnalyzerLineRadio, 0, 1, 1, 1)
         self.gridLayout_4.addWidget(self.averageAnalyzerFrame, 4, 0, 1, 1)
         self.gridLayout_2.addWidget(self.radioFrame, 0, 1, 1, 1)
         self.gridLayout.addWidget(self.baseFrame_2, 0, 1, 1, 1)
@@ -229,16 +242,16 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
         self.averageSampleCheckbox.setText(QCoreApplication.translate("Dialog", u"Average sample over class", None))
         self.singleAnalyzerCheckbox.setText(QCoreApplication.translate("Dialog", u"Single analyzer score", None))
         self.averageAnalyzerCheckbox.setText(QCoreApplication.translate("Dialog", u"Average analyzer score", None))
-        self.singleAnalyzerLineRadio_2.setText("")
-        self.singleAnalyzerScatterRadio_2.setText("")
-        self.averageAnalyzerScatterRadio_2.setText("")
-        self.averageAnalyzerLineRadio_2.setText("")
-        self.singleSampleLineRadio_2.setText("")
-        self.singleSampleScatterRadio_2.setText("")
+        self.averageSampleScatterRadio.setText("")
+        self.averageSampleLineRadio.setText("")
+        self.singleAnalyzerScatterRadio.setText("")
+        self.singleAnalyzerLineRadio.setText("")
+        self.singleSampleScatterRadio.setText("")
+        self.singleSampleLineRadio.setText("")
         self.scatterTitle_2.setText(QCoreApplication.translate("Dialog", u"Scatter", None))
         self.linetitle_2.setText(QCoreApplication.translate("Dialog", u"Line", None))
-        self.averageSampleLineRadio_2.setText("")
-        self.averageSampleScatterRadio_2.setText("")
+        self.averageAnalyzerScatterRadio.setText("")
+        self.averageAnalyzerLineRadio.setText("")
     
     def setup_widgets_for_distribution(self):
         self.clear_frame(self.baseFrame_2)

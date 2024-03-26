@@ -24,12 +24,12 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
 
     # Slot to show the main window
     def create_project(self):
-        self.hide()  # Hide the dialog
         #self.main_window.showMaximized()  # Show the main window
         self.app.set_shadow_effect(enabled=False)
         self.collect_selected_analyzers()
         self.app.project = self.project
         self.app.load_start_window()
+        self.hide()  # Hide the dialog
     
     def select_model_dialog(self):
         options = QtWidgets.QFileDialog.Options()

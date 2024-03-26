@@ -1,11 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Patch
+import random
 
 class Figure_():
     def __init__(self):
         self.config = {
-            "class": "normal",
+            "class": None,
             "prediction_quality": "correct",
             "plot_type":{}
         }
@@ -59,10 +60,15 @@ class Figure_():
     def is_comparison(self):
         return ("comparison" in self.config["plot_type"])
 
-    def is_distribution(self):
-        return ("distribution" in self.config["plot_type"])
+    def is_hist_distribution(self):
+        return ("distribution" in self.config["plot_type"] and self.config["plot_type"]["distribution"]["histogram"]["activated"])
 
-    def plot_relevance_score_distribution(self, project, analyzer):
+
+    def normalize(self, data, min_val, max_val):
+        return (data - np.min(data)) / (np.max(data) - np.min(data)) * (max_val - min_val) + min_val
+
+
+    def plot_relevance_score_distribution(self, project, analyzer, classes = None):
         """
         Avarage relevance scores over class
 
@@ -74,14 +80,18 @@ class Figure_():
         input_ = False
         if self.config["plot_type"]["distribution"]["histogram"]["analyzer_relevance_scores"]["activated"]:
             analyzer_ = True
-            if self.config["plot_type"]["distribution"]["histogram"]["analyzer_relevance_scores"]["show_all_class"]:
+            if self.config["plot_type"]["distribution"]["histogram"]["analyzer_relevance_scores"]["show_all_class"] and classes == None:
                 possible_classes = range(project.number_of_classes)
+            elif classes != None:
+                possible_classes = classes
             else:
                 possible_classes = [int(self.config["class"])]
         elif self.config["plot_type"]["distribution"]["histogram"]["input"]["activated"]:
             input_ = True
-            if self.config["plot_type"]["distribution"]["histogram"]["input"]["show_all_class"]:
+            if self.config["plot_type"]["distribution"]["histogram"]["input"]["show_all_class"] and classes == None:
                 possible_classes = range(project.number_of_classes)
+            elif classes != None:
+                possible_classes = classes
             else:
                 possible_classes = [int(self.config["class"])]
 
@@ -92,7 +102,6 @@ class Figure_():
         
     # Create the histogram plot
         for class_num in possible_classes:
-            print("QUALITY: ",  self.config["prediction_quality"])
             if self.config["prediction_quality"] == "ground_truth":
                 class_indices = project.get_truth_class_indices(class_num)
             elif self.config["prediction_quality"] == "correct":
@@ -109,7 +118,6 @@ class Figure_():
 
             class_values = project.test_x[class_indices]
             analyzer_class = project.analyzers[analyzer].analyzer_output[class_indices]
-            print("CLASS NUM: ", class_num)
             if class_values.shape[0] == 0:
                 continue
             bin_num = self.config["plot_type"]["distribution"]["histogram"]["num_of_bins"]
@@ -127,7 +135,9 @@ class Figure_():
         #plt.show()
         return fig
     
-    def plot_grouped_boxplot(self, project, class_num, analyzer):
+    def plot_grouped_boxplot(self, project, analyzer):
+        class_num = int(self.config["class"])
+        sample_freq = int(self.config["plot_type"]["distribution"]["box_plot"]["sample_frequency"])
         class_probabilities = project.predictions[:, class_num]
         sorted_indices = np.argsort(class_probabilities)
         
@@ -146,10 +156,10 @@ class Figure_():
 
         output = project.analyzers[analyzer].analyzer_output[sorted_indices].T
         #plt.boxplot(output[:,sorted_correct_indices], positions=sorted_correct_indices, flierprops = dict(marker='.', markersize=3, linestyle='none', markeredgecolor='dimgray'), patch_artist=True, boxprops = dict(facecolor = "dimgray"))
-        ax.boxplot(output[:,sorted_correct_pos_indices[::3]], positions=sorted_correct_pos_indices[::3], flierprops = dict(marker='.', markersize=3, linestyle='none', markeredgecolor='indianred'), patch_artist=True, boxprops = dict(facecolor = "indianred"))
-        ax.boxplot(output[:,sorted_correct_neg_indices[::3]], positions=sorted_correct_neg_indices[::3], flierprops = dict(marker='.', markersize=3, linestyle='none', markeredgecolor='powderblue'), patch_artist=True, boxprops = dict(facecolor = "powderblue"))
-        ax.boxplot(output[:,sorted_false_neg_indices[::3]], positions=sorted_false_neg_indices[::3], flierprops = dict(marker='.', markersize=3, linestyle='none', markeredgecolor='darkcyan'), patch_artist=True, boxprops = dict(facecolor = "darkcyan"))
-        ax.boxplot(output[:,sorted_false_pos_indices[::3]], positions=sorted_false_pos_indices[::3], flierprops = dict(marker='.', markersize=3, linestyle='none', markeredgecolor='darkred'), patch_artist=True, boxprops = dict(facecolor = "darkred"))
+        ax.boxplot(output[:,sorted_correct_pos_indices[::sample_freq]], positions=sorted_correct_pos_indices[::sample_freq], flierprops = dict(marker='.', markersize=3, linestyle='none', markeredgecolor='indianred'), patch_artist=True, boxprops = dict(facecolor = "indianred"))
+        ax.boxplot(output[:,sorted_correct_neg_indices[::sample_freq]], positions=sorted_correct_neg_indices[::sample_freq], flierprops = dict(marker='.', markersize=3, linestyle='none', markeredgecolor='powderblue'), patch_artist=True, boxprops = dict(facecolor = "powderblue"))
+        ax.boxplot(output[:,sorted_false_neg_indices[::sample_freq]], positions=sorted_false_neg_indices[::sample_freq], flierprops = dict(marker='.', markersize=3, linestyle='none', markeredgecolor='darkcyan'), patch_artist=True, boxprops = dict(facecolor = "darkcyan"))
+        ax.boxplot(output[:,sorted_false_pos_indices[::sample_freq]], positions=sorted_false_pos_indices[::sample_freq], flierprops = dict(marker='.', markersize=3, linestyle='none', markeredgecolor='darkred'), patch_artist=True, boxprops = dict(facecolor = "darkred"))
 
         legend_patches = [Patch(facecolor='powderblue', edgecolor='powderblue', label='True negative'),
                             Patch(facecolor='darkcyan', edgecolor='darkcyan', label='False negative'),
@@ -174,4 +184,79 @@ class Figure_():
         ax.grid(True, which='major', axis='x')
         #plt.savefig(f"{Path.cwd()}\..\plots\latest\ecg\\box_plot_distribution\{title}_class_{classes[class_num]}.png")
         #plt.show()
+        return fig
+
+
+    def plot_comparison(self, project, analyzer):
+        class_num = int(self.config["class"])
+        if self.config["prediction_quality"] == "correct":
+            indices_for_class = project.get_correct_pos_prediction_indices_for_class(class_num)
+            input_for_class = project.test_x[indices_for_class]
+            analyzer_for_class = project.analyzers[analyzer].analyzer_output[indices_for_class]
+            analyzer_class_mean = np.mean(analyzer_for_class, axis=0, keepdims=True)
+            input_class_mean = np.mean(input_for_class, axis=0, keepdims=True)
+            title = f"Correctly classified values - for class {class_num}"
+        elif self.config["prediction_quality"] == "incorrect":
+            indices_for_class = project.get_incorrect_prediction_indices_for_class(class_num)
+            input_for_class = project.test_x[indices_for_class]
+            analyzer_for_class = project.analyzers[analyzer].analyzer_output[indices_for_class]
+            analyzer_class_mean = np.mean(analyzer_for_class, axis=0, keepdims=True)
+            input_class_mean = np.mean(input_for_class, axis=0, keepdims=True)
+            title = f"Incorrectly classified values - for class {class_num}"
+        elif self.config["prediction_quality"] == "false_negative":
+            indices_for_class = project.get_false_negative_indices(class_num)
+            input_for_class = project.test_x[indices_for_class]
+            analyzer_for_class = project.analyzers[analyzer].analyzer_output[indices_for_class]
+            analyzer_class_mean = np.mean(analyzer_for_class, axis=0, keepdims=True)
+            input_class_mean = np.mean(input_for_class, axis=0, keepdims=True)
+            title = f"False negatively classified values - for class {class_num}"
+        elif self.config["prediction_quality"] == "false_positive":
+            indices_for_class = project.get_false_positive_indices(class_num)
+            input_for_class = project.test_x[indices_for_class]
+            analyzer_for_class = project.analyzers[analyzer].analyzer_output[indices_for_class]
+            analyzer_class_mean = np.mean(analyzer_for_class, axis=0, keepdims=True)
+            input_class_mean = np.mean(input_for_class, axis=0, keepdims=True)
+            title = f"False positively classified values - for class {class_num}"
+        
+
+        random_indices_to_plot = random.sample(range(input_for_class.shape[0]), 1)
+        random_index = random_indices_to_plot[0]
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        print(self.config["plot_type"]["comparison"])
+        if self.config["plot_type"]["comparison"]["channels"]["single_sample"]["activated"]:
+            # single input data
+            if self.config["plot_type"]["comparison"]["channels"]["single_sample"]["scatter"]:
+                ax.scatter(range(len(input_for_class[random_index,:])), self.normalize(input_for_class[random_index,:], -1, 1), color="r", label="Input input", s=2)
+            elif self.config["plot_type"]["comparison"]["channels"]["single_sample"]["line"]:
+                ax.plot(self.normalize(input_for_class[random_index,:], -1, 1), color="r", linestyle = "dashed", linewidth = 1, label="Single input")
+        if self.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["activated"]:
+            # mean input data
+            if self.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["scatter"]:
+                ax.scatter(range(len(input_class_mean[0,:])), self.normalize(input_class_mean[0,:], -1, 1), color="r", label="Input mean", s=2)
+            elif self.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["line"]:
+                ax.plot(self.normalize(input_class_mean[0,:], -1, 1), color="r", linewidth = 1, label="Input mean")
+        if self.config["plot_type"]["comparison"]["channels"]["single_analyzer_score"]["activated"]:
+            # single analyzer
+            if self.config["plot_type"]["comparison"]["channels"]["single_analyzer_score"]["scatter"]:
+                ax.scatter(range(len(analyzer_for_class[random_index,:])), self.normalize(analyzer_for_class[random_index,:], -1, 1), color="k", label="Single analyzer", s=2)
+            elif self.config["plot_type"]["comparison"]["channels"]["single_analyzer_score"]["line"]:
+                ax.plot(self.normalize(analyzer_for_class[random_index,:], -1, 1), color="k", linestyle = "dashed", linewidth = 1, label="Single analyzer")
+        if self.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["activated"]:
+            # mean analyzer
+            if self.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["scatter"]:
+                ax.scatter(range(len(analyzer_class_mean[0,:])), self.normalize(analyzer_class_mean[0,:], -1, 1), color="k", label="Analyzer mean", s=2)
+            elif self.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["line"]:
+                ax.plot(self.normalize(analyzer_class_mean[0,:], -1, 1), color="k", linewidth = 1, label="Analyzer mean")
+        plt.figure(figsize=(10,6))
+        plt.plot(self.normalize(input_class_mean[0,:], -1, 1), color="r", label="Input")
+        plt.plot(self.normalize(analyzer_class_mean[0,:], -1, 1), color="k", linestyle = "dashed", linewidth = 0.5, label="Analyzer")
+
+        for h_line in np.arange(-1,1.25,0.5):
+            ax.axhline(y = h_line, color = "gray", linestyle = "dashed", linewidth = 0.25)
+        
+        ax.set_yticks(np.arange(-1, 1.25, 0.25))
+        ax.legend(fontsize='large', loc='upper right')
+        ax.set_title(title)
         return fig

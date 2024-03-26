@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from PySide6 import QtWidgets, QtCore
 from PySide6.QtWidgets import QTextBrowser,QVBoxLayout, QFrame, QGridLayout, QCheckBox, QGraphicsView, QWidget
-from PySide6.QtCore import QSize, QCoreApplication
+from PySide6.QtCore import QSize, QCoreApplication, Qt
 from utils import main
 import sys, os
 import tensorflow as tf
@@ -42,14 +42,27 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         self.showMaximized()
         self.setWindowTitle("Analyzer application")
         self.effect = QtWidgets.QGraphicsOpacityEffect(self)
-        self.set_shadow_effect(enabled=True)
+        #self.set_shadow_effect(enabled=True)
         self.project = None
+        self.active_upper_plot = None
+        self.active_bottom_plot = None
+        self.changedTab = None
 
         self.upper_new_plot_button.clicked.connect(self.show_create_figure_dialog)
         self.bottom_new_plot_button.clicked.connect(self.show_create_figure_dialog)
+        self.upperPlotTabWidget.currentChanged.connect(self.upper_tab_changed)
+        self.bottomPlotTabWidget.currentChanged.connect(self.bottom_tab_changed)
 
     def get_current_analyzer(self):
         return str(self.listWidget.currentItem().text())
+    
+    def upper_tab_changed(self, index):
+        self.active_upper_plot = index
+        self.changedTab = 0
+    
+    def bottom_tab_changed(self, index):
+        self.active_bottom_plot = index
+        self.changedTab = 1
 
     # add elements to side menu bar
     def populate_list_widget(self):
@@ -208,6 +221,15 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
 
                 self.project.analyzers["LRP_AB"].analyzer_output = self.project.analyzers["LRP_AB"].innvestigate_analyzer.analyze(self.project.test_x)
 
+    def checkbox_state_changed(self):
+        checked_checkboxes = [checkbox for checkbox in self.checkboxes if checkbox.isChecked()]
+        classes = [int(checkbox.objectName().split("_")[-1])-1 for checkbox in checked_checkboxes]
+        self.load_plot("upper", self.active_upper_plot, classes = classes)
+        analyzer = self.get_current_analyzer()
+        plotTab = self.project.analyzers[analyzer].ui_elements_config[f"upper_tabs"][f"tab_{self.active_upper_plot}"]
+        figureAttributes = plotTab.findChild(QTextBrowser, f"upperFigureAttributes_{self.active_upper_plot}")
+        figureAttributes.append(str(classes))
+
     def create_new_comparison_figure(self, place, figure):
         analyzer = self.get_current_analyzer()
         plotCount = self.project.analyzers[analyzer].ui_elements_config[f"{place}_plot_count"]
@@ -239,16 +261,16 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         channelsFrame.setFrameShadow(QFrame.Raised)
         verticalLayout_3 = QVBoxLayout(channelsFrame)
         verticalLayout_3.setObjectName(u"verticalLayout_3")
-        plot_Channel_1 = QCheckBox(channelsFrame)
-        plot_Channel_1.setObjectName(f"{place}Plot_{plotCount}_Channel_1")
-        verticalLayout_3.addWidget(plot_Channel_1)
-        plot_Channel_2 = QCheckBox(channelsFrame)
-        plot_Channel_2.setObjectName(f"{place}Plot_{plotCount}_Channel_2")
-        verticalLayout_3.addWidget(plot_Channel_2)
-        plot_Channel_3 = QCheckBox(channelsFrame)
-        plot_Channel_3.setObjectName(f"{place}Plot_{plotCount}_Channel_3")
-        verticalLayout_3.addWidget(plot_Channel_3)
         if figure.is_comparison():
+            plot_Channel_1 = QCheckBox(channelsFrame)
+            plot_Channel_1.setObjectName(f"{place}Plot_{plotCount}_Channel_1")
+            verticalLayout_3.addWidget(plot_Channel_1)
+            plot_Channel_2 = QCheckBox(channelsFrame)
+            plot_Channel_2.setObjectName(f"{place}Plot_{plotCount}_Channel_2")
+            verticalLayout_3.addWidget(plot_Channel_2)
+            plot_Channel_3 = QCheckBox(channelsFrame)
+            plot_Channel_3.setObjectName(f"{place}Plot_{plotCount}_Channel_3")
+            verticalLayout_3.addWidget(plot_Channel_3)
             plot_Channel_1.setText(QCoreApplication.translate("MainWindow", u"Single sample", None))
             plot_Channel_2.setText(QCoreApplication.translate("MainWindow", u"Average sample", None))
             plot_Channel_3.setText(QCoreApplication.translate("MainWindow", u"Single analyzer", None))
@@ -256,10 +278,15 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
             plot_Channel_4.setObjectName(f"{place}Plot_{plotCount}_Channel_4")
             verticalLayout_3.addWidget(plot_Channel_4)
             plot_Channel_4.setText(QCoreApplication.translate("MainWindow", u"Average analyzer", None))
-        if figure.is_distribution():
-            plot_Channel_1.setText(QCoreApplication.translate("MainWindow", u"Class_1", None))
-            plot_Channel_2.setText(QCoreApplication.translate("MainWindow", u"Class_2", None))
-            plot_Channel_3.setText(QCoreApplication.translate("MainWindow", u"Class_3", None))
+        if figure.is_hist_distribution():
+            self.checkboxes = [] 
+            for i in range(self.project.number_of_classes):
+                checkbox = QCheckBox(channelsFrame)
+                checkbox.setObjectName(f"plot_Channel_{i+1}")
+                checkbox.setText(QCoreApplication.translate("MainWindow", f"Class {i+1}", None))
+                checkbox.stateChanged.connect(self.checkbox_state_changed) 
+                verticalLayout_3.addWidget(checkbox)
+                self.checkboxes.append(checkbox)
         gridLayout_5.addWidget(channelsFrame, 1, 0, 1, 1)
         gridLayout_3.addWidget(figureInfoFrame, 0, 2, 1, 1)
         plot = QGraphicsView(plotTab)
@@ -275,12 +302,11 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
             self.project.analyzers[analyzer].increase_bottom_plot_count()
         self.project.analyzers[analyzer].ui_elements_config[f"{place}_tabs"][f"tab_{plotCount}"] = plotTab
 
-        self.load_plot(place, plotCount, figure)
-    
+        self.load_plot(place, plotCount)
 
-    def load_plot(self, position, tab_number, figure):
+
+    def load_plot(self, position, tab_number, classes = None):
         analyzer = self.get_current_analyzer()
-        #plotCount = self.project.config["analyzers"][analyzer][f"{position}_plot_count"]
         current_tab = self.project.analyzers[analyzer].ui_elements_config[f"{position}_tabs"].get(f"tab_{tab_number}")
         if current_tab:
             scene = QtWidgets.QGraphicsScene()
@@ -289,12 +315,14 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
                 current_plot.setScene(scene)
             else:
                 print(f"{position}Plot_{tab_number} not found")
-
-        print(figure.config)
+        print("len:" , len(self.project.analyzers[analyzer].ui_elements_config[f"{position}_figures"]), tab_number)
+        figure = self.project.analyzers[analyzer].ui_elements_config[f"{position}_figures"][tab_number]
         if "distribution" in figure.config["plot_type"] and figure.config["plot_type"]["distribution"]["histogram"]["activated"]:
-            fig = figure.plot_relevance_score_distribution(self.project, analyzer)
+            fig = figure.plot_relevance_score_distribution(self.project, analyzer, classes = classes)
         elif "distribution" in figure.config["plot_type"] and figure.config["plot_type"]["distribution"]["box_plot"]["activated"]:
-            fig = figure.plot_grouped_boxplot(self.project, 0,  analyzer)
+            fig = figure.plot_grouped_boxplot(self.project, analyzer)
+        elif "comparison" in figure.config["plot_type"]:
+            fig = figure.plot_comparison(self.project, analyzer)
         else:
             fig = plt.figure()
             axes = fig.gca()
@@ -317,6 +345,7 @@ if __name__ == '__main__':
     apply_stylesheet(app)
     qt_app = MainApp()
     qt_dialog = NewModelDialog(qt_app)
+    qt_dialog.setWindowFlags(qt_dialog.windowFlags() | Qt.WindowStaysOnTopHint)
     qt_dialog.show()
     #qt_app.show()
     app.exec_()
