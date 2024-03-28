@@ -101,20 +101,11 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
                     figure.config["plot_type"]["distribution"]["histogram"]["input"]["activated"] = True
                     figure.config["plot_type"]["distribution"]["histogram"]["input"]["show_all_class"] = self.showAllInputRadio.isChecked()
                 print(figure.config["plot_type"]["distribution"]["histogram"]["activated"])
-        if self.place == 0:
-            analyzer = self.app.get_current_analyzer()
-            self.app.project.analyzers[analyzer].ui_elements_config[f"upper_figures"].append(figure)
-            self.app.create_new_comparison_figure("upper", figure)
-        
-            currentcount = self.app.project.analyzers[analyzer].ui_elements_config[f"upper_plot_count"]
-            print(self.app.project.analyzers[analyzer].ui_elements_config[f"upper_figures"][currentcount-1])
-        elif self.place == 1:
-            analyzer = self.app.get_current_analyzer()
-            self.app.project.analyzers[analyzer].ui_elements_config[f"bottom_figures"].append(figure)
-            self.app.create_new_comparison_figure("bottom", figure)
 
-            currentcount = self.app.project.analyzers[analyzer].ui_elements_config[f"bottom_plot_count"]
-            print(self.app.project.analyzers[analyzer].ui_elements_config[f"bottom_figures"][currentcount-1])
+        analyzer = self.app.get_current_analyzer()
+        self.app.project.analyzers[analyzer].ui_elements_config[f"{self.place}_figures"].append(figure)
+        self.app.create_new_comparison_figure(self.place, figure)
+        print(self.app.project.analyzers[analyzer].ui_elements_config[f"{self.place}_figures"])
         self.accept()
 
 

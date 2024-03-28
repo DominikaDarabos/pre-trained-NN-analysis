@@ -651,18 +651,8 @@ p, li { white-space: pre-wrap; }
              <item row="2" column="0">
               <widget class="QTabWidget" name="infoWidget">
                <property name="currentIndex">
-                <number>0</number>
+                <number>-1</number>
                </property>
-               <widget class="QWidget" name="tab">
-                <attribute name="title">
-                 <string>Tab 1</string>
-                </attribute>
-                <layout class="QGridLayout" name="gridLayout_4">
-                 <item row="0" column="0">
-                  <widget class="QGraphicsView" name="graphicsView"/>
-                 </item>
-                </layout>
-               </widget>
               </widget>
              </item>
             </layout>

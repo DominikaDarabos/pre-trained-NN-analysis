@@ -68,7 +68,7 @@ class Figure_():
         return (data - np.min(data)) / (np.max(data) - np.min(data)) * (max_val - min_val) + min_val
 
 
-    def plot_relevance_score_distribution(self, project, analyzer, classes = None):
+    def plot_relevance_score_distribution(self, project, analyzer, figureSize, classes = None):
         """
         Avarage relevance scores over class
 
@@ -95,7 +95,7 @@ class Figure_():
             else:
                 possible_classes = [int(self.config["class"])]
 
-        fig = plt.figure()
+        fig = plt.figure(figsize=((figureSize.width() - 10)/100, (figureSize.height() - 10)/100))
         ax = fig.add_subplot(111)
         colors=['red', 'dimgray', 'lightgray']
         alpha_val = 0.5
@@ -125,24 +125,24 @@ class Figure_():
                 ax.hist(analyzer_class.flatten(), bins=bin_num, color=colors[class_num], alpha = alpha_val, label=f"Class_{class_num+1}")
             elif input_:
                 ax.hist(class_values.flatten(), bins=bin_num, color=colors[class_num], alpha = alpha_val, label=f"Class_{class_num+1}")
-        ax.set_title(analyzer, fontsize = 16)
-        ax.title.set_size(10)
+        #◙ax.set_title(analyzer, fontsize = 16)
+        #◙ax.title.set_size(10)
         ax.set_yscale("log")
         ax.legend()
         #ax.set_ylabel('count')
-        ax.set_xlabel('Relevance scores',fontsize = 11)
+        ax.set_xlabel('Relevance scores',fontsize = 'medium')
+        fig.tight_layout()
         #plt.savefig(f"{Path.cwd()}\..\plots\latest\ecg\hist_plot_distribution\dist_ecg_{title}.png")
         #plt.show()
         return fig
     
-    def plot_grouped_boxplot(self, project, analyzer):
+    def plot_grouped_boxplot(self, project, analyzer, figureSize):
         class_num = int(self.config["class"])
         sample_freq = int(self.config["plot_type"]["distribution"]["box_plot"]["sample_frequency"])
         class_probabilities = project.predictions[:, class_num]
         sorted_indices = np.argsort(class_probabilities)
         
-        #plt.figure(figsize=(10,6))
-        fig = plt.figure()
+        fig = plt.figure(figsize=((figureSize.width() - 10)/100, (figureSize.height() - 10)/100))
         ax = fig.add_subplot(111)
         correct_pos_indices = project.get_correct_pos_prediction_indices_for_class(class_num)
         correct_neg_indices = project.get_correct_neg_prediction_indices_for_class(class_num)
@@ -166,10 +166,10 @@ class Figure_():
                             Patch(facecolor='indianred', edgecolor='indianred', label='True positive'),
                             Patch(facecolor='darkred', edgecolor='darkred', label='False positive')]
 
-        ax.legend(handles=legend_patches, loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=len(legend_patches))
+        ax.legend(handles=legend_patches, loc='upper center', bbox_to_anchor=(0.5, 1.2), ncol=len(legend_patches))
 
         classes = ["normal", "abnormal"]
-        ax.set_title(f"{analyzer} vs. probability of {classes[class_num]} signal according to the model")
+        #ax.set_title(f"{analyzer} vs. probability of {classes[class_num]} signal according to the model")
         ax.set_xlabel(f"Probability of {classes[class_num]} signal")
         ax.set_ylabel("Relevance Scores")
         min_, max_ = np.percentile(project.analyzers[analyzer].analyzer_output.T, [0.1,99.9])
@@ -183,11 +183,10 @@ class Figure_():
         fig.tight_layout()
         ax.grid(True, which='major', axis='x')
         #plt.savefig(f"{Path.cwd()}\..\plots\latest\ecg\\box_plot_distribution\{title}_class_{classes[class_num]}.png")
-        #plt.show()
         return fig
 
 
-    def plot_comparison(self, project, analyzer):
+    def plot_comparison(self, project, analyzer, figureSize):
         class_num = int(self.config["class"])
         if self.config["prediction_quality"] == "correct":
             indices_for_class = project.get_correct_pos_prediction_indices_for_class(class_num)
@@ -221,10 +220,8 @@ class Figure_():
 
         random_indices_to_plot = random.sample(range(input_for_class.shape[0]), 1)
         random_index = random_indices_to_plot[0]
-
-        fig = plt.figure()
+        fig = plt.figure(figsize=((figureSize.width() - 10)/100, (figureSize.height() - 10)/100))
         ax = fig.add_subplot(111)
-        print(self.config["plot_type"]["comparison"])
         if self.config["plot_type"]["comparison"]["channels"]["single_sample"]["activated"]:
             # single input data
             if self.config["plot_type"]["comparison"]["channels"]["single_sample"]["scatter"]:
@@ -258,5 +255,5 @@ class Figure_():
         
         ax.set_yticks(np.arange(-1, 1.25, 0.25))
         ax.legend(fontsize='large', loc='upper right')
-        ax.set_title(title)
+        #ax.set_title(title)
         return fig

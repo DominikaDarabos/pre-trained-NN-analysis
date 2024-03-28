@@ -28,6 +28,21 @@ class Ui_MainWindow(object):
         MainWindow.setTabShape(QTabWidget.Rounded)
         self.baseWidget = QWidget(MainWindow)
         self.baseWidget.setObjectName(u"baseWidget")
+        MainWindow.setCentralWidget(self.baseWidget)
+        self.statusbar = QStatusBar(MainWindow)
+        self.statusbar.setObjectName(u"statusbar")
+        MainWindow.setStatusBar(self.statusbar)
+
+        self.retranslateUi(MainWindow)
+
+        QMetaObject.connectSlotsByName(MainWindow)
+    # setupUi
+
+    def retranslateUi(self, MainWindow):
+        MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
+        # retranslateUi
+    
+    def fill_base_window(self):
         self.gridLayout = QGridLayout(self.baseWidget)
         self.gridLayout.setObjectName(u"gridLayout")
         self.baseFrame = QFrame(self.baseWidget)
@@ -74,8 +89,8 @@ class Ui_MainWindow(object):
         self.gridLayout_2.setContentsMargins(0, 0, 0, 0)
         self.plotPanelFrame = QFrame(self.modelArea)
         self.plotPanelFrame.setObjectName(u"plotPanelFrame")
-        self.plotPanelFrame.setMinimumSize(QSize(800, 0))
-        self.plotPanelFrame.setMaximumSize(QSize(1200, 16777215))
+        #self.plotPanelFrame.setMinimumSize(QSize(800, 0))
+        #self.plotPanelFrame.setMaximumSize(QSize(1200, 16777215))
         self.plotPanelFrame.setFrameShape(QFrame.StyledPanel)
         self.plotPanelFrame.setFrameShadow(QFrame.Raised)
         self.gridLayout_3 = QGridLayout(self.plotPanelFrame)
@@ -134,8 +149,8 @@ class Ui_MainWindow(object):
 
         self.infoPanelFrame = QFrame(self.modelArea)
         self.infoPanelFrame.setObjectName(u"infoPanelFrame")
-        self.infoPanelFrame.setMinimumSize(QSize(300, 0))
-        self.infoPanelFrame.setMaximumSize(QSize(800, 16777215))
+        #self.infoPanelFrame.setMinimumSize(QSize(300, 0))
+        #self.infoPanelFrame.setMaximumSize(QSize(800, 16777215))
         self.infoPanelFrame.setAutoFillBackground(False)
         self.infoPanelFrame.setFrameShape(QFrame.StyledPanel)
         self.infoPanelFrame.setFrameShadow(QFrame.Raised)
@@ -153,8 +168,6 @@ class Ui_MainWindow(object):
         self.gridLayout_9.setContentsMargins(0, 0, 0, 0)
         self.InputInfoFrame = QFrame(self.inputOutputInfoFrame)
         self.InputInfoFrame.setObjectName(u"InputInfoFrame")
-        self.InputInfoFrame.setMinimumSize(QSize(0, 0))
-        self.InputInfoFrame.setMaximumSize(QSize(16777215, 16777215))
         self.InputInfoFrame.setFrameShape(QFrame.StyledPanel)
         self.InputInfoFrame.setFrameShadow(QFrame.Raised)
         self.verticalLayout_9 = QVBoxLayout(self.InputInfoFrame)
@@ -168,8 +181,6 @@ class Ui_MainWindow(object):
 
         self.inputDataInfo = QTextBrowser(self.InputInfoFrame)
         self.inputDataInfo.setObjectName(u"inputDataInfo")
-        self.inputDataInfo.setMinimumSize(QSize(0, 0))
-        self.inputDataInfo.setMaximumSize(QSize(16777215, 16777215))
 
         self.verticalLayout_9.addWidget(self.inputDataInfo)
 
@@ -178,8 +189,6 @@ class Ui_MainWindow(object):
 
         self.OutputInfoFrame = QFrame(self.inputOutputInfoFrame)
         self.OutputInfoFrame.setObjectName(u"OutputInfoFrame")
-        self.OutputInfoFrame.setMinimumSize(QSize(0, 0))
-        self.OutputInfoFrame.setMaximumSize(QSize(16777215, 16777215))
         self.OutputInfoFrame.setFrameShape(QFrame.StyledPanel)
         self.OutputInfoFrame.setFrameShadow(QFrame.Raised)
         self.verticalLayout_10 = QVBoxLayout(self.OutputInfoFrame)
@@ -193,8 +202,6 @@ class Ui_MainWindow(object):
 
         self.outputDataInfo = QTextBrowser(self.OutputInfoFrame)
         self.outputDataInfo.setObjectName(u"outputDataInfo")
-        self.outputDataInfo.setMinimumSize(QSize(0, 0))
-        self.outputDataInfo.setMaximumSize(QSize(16777215, 16777215))
 
         self.verticalLayout_10.addWidget(self.outputDataInfo)
 
@@ -214,8 +221,6 @@ class Ui_MainWindow(object):
         self.gridLayout_8.setContentsMargins(0, 0, 0, 0)
         self.validationInfoFrame = QFrame(self.modelValidationInfoFrame)
         self.validationInfoFrame.setObjectName(u"validationInfoFrame")
-        self.validationInfoFrame.setMinimumSize(QSize(0, 0))
-        self.validationInfoFrame.setMaximumSize(QSize(16777215, 16777215))
         self.validationInfoFrame.setFrameShape(QFrame.StyledPanel)
         self.validationInfoFrame.setFrameShadow(QFrame.Raised)
         self.verticalLayout_8 = QVBoxLayout(self.validationInfoFrame)
@@ -229,8 +234,6 @@ class Ui_MainWindow(object):
 
         self.validationInfo = QTextBrowser(self.validationInfoFrame)
         self.validationInfo.setObjectName(u"validationInfo")
-        self.validationInfo.setMinimumSize(QSize(0, 0))
-        self.validationInfo.setMaximumSize(QSize(16777215, 16777215))
 
         self.verticalLayout_8.addWidget(self.validationInfo)
 
@@ -239,8 +242,6 @@ class Ui_MainWindow(object):
 
         self.modelInfoFrame = QFrame(self.modelValidationInfoFrame)
         self.modelInfoFrame.setObjectName(u"modelInfoFrame")
-        self.modelInfoFrame.setMinimumSize(QSize(0, 0))
-        self.modelInfoFrame.setMaximumSize(QSize(16777215, 16777215))
         self.modelInfoFrame.setFrameShape(QFrame.StyledPanel)
         self.modelInfoFrame.setFrameShadow(QFrame.Raised)
         self.verticalLayout_11 = QVBoxLayout(self.modelInfoFrame)
@@ -254,8 +255,6 @@ class Ui_MainWindow(object):
 
         self.modelInfo = QTextBrowser(self.modelInfoFrame)
         self.modelInfo.setObjectName(u"modelInfo")
-        self.modelInfo.setMinimumSize(QSize(0, 0))
-        self.modelInfo.setMaximumSize(QSize(16777215, 16777215))
 
         self.verticalLayout_11.addWidget(self.modelInfo)
 
@@ -267,16 +266,6 @@ class Ui_MainWindow(object):
 
         self.infoWidget = QTabWidget(self.infoPanelFrame)
         self.infoWidget.setObjectName(u"infoWidget")
-        self.tab = QWidget()
-        self.tab.setObjectName(u"tab")
-        self.gridLayout_4 = QGridLayout(self.tab)
-        self.gridLayout_4.setObjectName(u"gridLayout_4")
-        self.graphicsView = QGraphicsView(self.tab)
-        self.graphicsView.setObjectName(u"graphicsView")
-
-        self.gridLayout_4.addWidget(self.graphicsView, 0, 0, 1, 1)
-
-        self.infoWidget.addTab(self.tab, "")
 
         self.gridLayout_7.addWidget(self.infoWidget, 2, 0, 1, 1)
 
@@ -289,23 +278,9 @@ class Ui_MainWindow(object):
 
         self.gridLayout.addWidget(self.baseFrame, 0, 0, 1, 1)
 
-        MainWindow.setCentralWidget(self.baseWidget)
-        self.statusbar = QStatusBar(MainWindow)
-        self.statusbar.setObjectName(u"statusbar")
-        MainWindow.setStatusBar(self.statusbar)
-
-        self.retranslateUi(MainWindow)
-
         self.upperPlotTabWidget.setCurrentIndex(-1)
         self.bottomPlotTabWidget.setCurrentIndex(-1)
         self.infoWidget.setCurrentIndex(0)
-
-
-        QMetaObject.connectSlotsByName(MainWindow)
-    # setupUi
-
-    def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MainWindow", None))
         self.menuButton.setText(QCoreApplication.translate("MainWindow", u"Menu", None))
         self.upper_new_plot_button.setText(QCoreApplication.translate("MainWindow", u"+", None))
         self.bottom_new_plot_button.setText(QCoreApplication.translate("MainWindow", u"+", None))
@@ -334,6 +309,4 @@ class Ui_MainWindow(object):
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:'MS Shell Dlg 2'; font-size:7.8pt; font-weight:400; font-style:normal;\">\n"
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
-        self.infoWidget.setTabText(self.infoWidget.indexOf(self.tab), QCoreApplication.translate("MainWindow", u"Tab 1", None))
-    # retranslateUi
 

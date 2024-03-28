@@ -25,7 +25,7 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
     # Slot to show the main window
     def create_project(self):
         #self.main_window.showMaximized()  # Show the main window
-        self.app.set_shadow_effect(enabled=False)
+        #self.app.set_shadow_effect(enabled=False)
         self.collect_selected_analyzers()
         self.app.project = self.project
         self.app.load_start_window()
@@ -80,6 +80,11 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
             numbers_as_integers = [int(num_str) for num_str in numbers_as_strings]
             self.project.analyzers["LRP_AB"] =  Analyzer(alpha = numbers_as_integers[0], beta = numbers_as_integers[1])
             self.project.analyzers["LRP_AB"].activation = activations[self.comboBox_LRP_AB.currentText()]
-        if self.checkBox_LRP_Epsilon.isChecked() and self.EpsilonInput.text().isnumeric():
-            self.project.analyzers["LRP_Epsilon"] = Analyzer(epsilon = float(self.EpsilonInput.text()))
-            self.project.analyzers["LRP_Epsilon"].activation = activations[self.comboBox_LRP_Epsilon.currentText()]
+        if self.checkBox_LRP_Epsilon.isChecked():
+            try:
+                eps = float(self.EpsilonInput.text())
+                self.project.analyzers["LRP_Epsilon"] = Analyzer(epsilon = eps)
+                self.project.analyzers["LRP_Epsilon"].activation = activations[self.comboBox_LRP_Epsilon.currentText()]
+            except ValueError:
+                pass
+            
