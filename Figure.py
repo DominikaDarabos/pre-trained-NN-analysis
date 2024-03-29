@@ -2,11 +2,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Patch
 import random
+from matplotlib.collections import LineCollection
+from matplotlib.colors import BoundaryNorm, ListedColormap
+from matplotlib.cm import ScalarMappable
+from matplotlib.colors import LinearSegmentedColormap
 
 class Figure_():
     def __init__(self):
         self.config = {
             "class": None,
+            "channels" : None,
             "prediction_quality": "correct",
             "plot_type":{}
         }
@@ -20,11 +25,6 @@ class Figure_():
                             "line": False
                         },
                         "average_sample_over_class":{
-                            "activated": False,
-                            "scatter": False,
-                            "line": False
-                        },
-                        "single_analyzer_score":{
                             "activated": False,
                             "scatter": False,
                             "line": False
@@ -46,14 +46,8 @@ class Figure_():
                     "histogram":{
                         "activated": False,
                         "num_of_bins": 0,
-                        "analyzer_relevance_scores":{
-                            "activated": False,
-                            "show_all_class": False
-                        },
-                        "input":{
-                            "activated": False,
-                            "show_all_class": False
-                        }
+                        "analyzer_relevance_scores": False,
+                        "input": False
                     }
                 }
 
@@ -68,7 +62,7 @@ class Figure_():
         return (data - np.min(data)) / (np.max(data) - np.min(data)) * (max_val - min_val) + min_val
 
 
-    def plot_relevance_score_distribution(self, project, analyzer, figureSize, classes = None):
+    def plot_relevance_score_distribution(self, project, analyzer, figureSize):
         """
         Avarage relevance scores over class
 
@@ -76,32 +70,26 @@ class Figure_():
         The plot visualize all the classes' analyzer outcomes' distribution
         Classes seperated by the gorund truth labels
         """
-        analyzer_ = False
-        input_ = False
-        if self.config["plot_type"]["distribution"]["histogram"]["analyzer_relevance_scores"]["activated"]:
-            analyzer_ = True
-            if self.config["plot_type"]["distribution"]["histogram"]["analyzer_relevance_scores"]["show_all_class"] and classes == None:
-                possible_classes = range(project.number_of_classes)
-            elif classes != None:
-                possible_classes = classes
-            else:
-                possible_classes = [int(self.config["class"])]
-        elif self.config["plot_type"]["distribution"]["histogram"]["input"]["activated"]:
-            input_ = True
-            if self.config["plot_type"]["distribution"]["histogram"]["input"]["show_all_class"] and classes == None:
-                possible_classes = range(project.number_of_classes)
-            elif classes != None:
-                possible_classes = classes
-            else:
-                possible_classes = [int(self.config["class"])]
 
         fig = plt.figure(figsize=((figureSize.width() - 10)/100, (figureSize.height() - 10)/100))
         ax = fig.add_subplot(111)
-        colors=['red', 'dimgray', 'lightgray']
+        colors=['darkred', 'dimgray', 'lightgray']
         alpha_val = 0.5
+
+        color1 = (0 / 255, 139 / 255, 139 / 255)
+        color1 = (139 / 255, 0 / 255, 0 / 255)
+        color2 = (105 / 255,105 / 255,105 / 255)
+        # Define the number of steps for the transition
+        num_steps = len(self.config["channels"])
+
+        # Create a list of colors transitioning between color1 and color2
+        colors = [color1, (1,1,1),color2]
+
+        # Create the custom colormap
+        custom_cmap = LinearSegmentedColormap.from_list("custom_colormap", colors, N=num_steps)
         
     # Create the histogram plot
-        for class_num in possible_classes:
+        for class_num in self.config["channels"]:
             if self.config["prediction_quality"] == "ground_truth":
                 class_indices = project.get_truth_class_indices(class_num)
             elif self.config["prediction_quality"] == "correct":
@@ -121,16 +109,18 @@ class Figure_():
             if class_values.shape[0] == 0:
                 continue
             bin_num = self.config["plot_type"]["distribution"]["histogram"]["num_of_bins"]
-            if analyzer_:
-                ax.hist(analyzer_class.flatten(), bins=bin_num, color=colors[class_num], alpha = alpha_val, label=f"Class_{class_num+1}")
-            elif input_:
-                ax.hist(class_values.flatten(), bins=bin_num, color=colors[class_num], alpha = alpha_val, label=f"Class_{class_num+1}")
+            if self.config["plot_type"]["distribution"]["histogram"]["analyzer_relevance_scores"]:
+                ax.hist(analyzer_class.flatten(), bins=bin_num, color=custom_cmap(class_num), alpha = alpha_val, label=f"Class_{class_num}")
+                label = "Relevance scores"
+            elif self.config["plot_type"]["distribution"]["histogram"]["input"]:
+                ax.hist(class_values.flatten(), bins=bin_num, color=custom_cmap(class_num), alpha = alpha_val, label=f"Class_{class_num}")
+                label = "Input"
         #◙ax.set_title(analyzer, fontsize = 16)
         #◙ax.title.set_size(10)
         ax.set_yscale("log")
         ax.legend()
         #ax.set_ylabel('count')
-        ax.set_xlabel('Relevance scores',fontsize = 'medium')
+        ax.set_xlabel(label,fontsize = 'medium')
         fig.tight_layout()
         #plt.savefig(f"{Path.cwd()}\..\plots\latest\ecg\hist_plot_distribution\dist_ecg_{title}.png")
         #plt.show()
@@ -168,9 +158,8 @@ class Figure_():
 
         ax.legend(handles=legend_patches, loc='upper center', bbox_to_anchor=(0.5, 1.2), ncol=len(legend_patches))
 
-        classes = ["normal", "abnormal"]
         #ax.set_title(f"{analyzer} vs. probability of {classes[class_num]} signal according to the model")
-        ax.set_xlabel(f"Probability of {classes[class_num]} signal")
+        ax.set_xlabel(f"Probability of signal belongs to class_{class_num}")
         ax.set_ylabel("Relevance Scores")
         min_, max_ = np.percentile(project.analyzers[analyzer].analyzer_output.T, [0.1,99.9])
         ax.set_ylim(min_,max_)
@@ -185,6 +174,24 @@ class Figure_():
         #plt.savefig(f"{Path.cwd()}\..\plots\latest\ecg\\box_plot_distribution\{title}_class_{classes[class_num]}.png")
         return fig
 
+    def upsample(self, data, factor):
+    # Determine the number of new points to be inserted between each original point
+        new_points = factor - 1
+
+        # Initialize an empty list to store the new interpolated data
+        interpolated_data = []
+
+        for i in range(len(data) - 1):
+            interpolated_data.append(data[i])  # Include the original point
+
+            # Calculate the values to be interpolated between the current and next point
+            for n in range(1, new_points + 1):
+                interpolated_value = data[i] + (data[i + 1] - data[i]) * n / factor
+                interpolated_data.append(interpolated_value)
+
+        interpolated_data.append(data[-1])  # Include the last original point
+
+        return interpolated_data
 
     def plot_comparison(self, project, analyzer, figureSize):
         class_num = int(self.config["class"])
@@ -216,39 +223,69 @@ class Figure_():
             analyzer_class_mean = np.mean(analyzer_for_class, axis=0, keepdims=True)
             input_class_mean = np.mean(input_for_class, axis=0, keepdims=True)
             title = f"False positively classified values - for class {class_num}"
-        
 
         random_indices_to_plot = random.sample(range(input_for_class.shape[0]), 1)
         random_index = random_indices_to_plot[0]
+
+        color1 = (0 / 255, 139 / 255, 139 / 255)
+        color2 = (139 / 255, 0 / 255, 0 / 255)
+        # Define the number of steps for the transition
+        num_steps = 256
+
+        # Create a list of colors transitioning between color1 and color2
+        colors = [color1, (1,1,1),color2]
+
+        # Create the custom colormap
+        custom_cmap = LinearSegmentedColormap.from_list("custom_colormap", colors, N=num_steps)
+
         fig = plt.figure(figsize=((figureSize.width() - 10)/100, (figureSize.height() - 10)/100))
         ax = fig.add_subplot(111)
+        if self.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["activated"]:
+            y = self.upsample(self.normalize(input_class_mean[0,:], -1, 1),5)
+            x = range(len(y))
+            if self.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["scatter"]:
+                ax.scatter(x, y, color="indianred", label="Input mean", s=1)
+            elif self.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["line"]:
+                ax.plot(y, color="indianred", linewidth = 1, label="Input mean")
+        if self.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["activated"]:
+            y = self.upsample(self.normalize(analyzer_class_mean[0,:], -1, 1),5)
+            x = range(len(y))
+            if self.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["scatter"]:
+                ax.scatter(x, y, color="dimgray", label="Analyzer mean", s=1)
+            elif self.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["line"]:
+                ax.plot(y, color="dimgray", linewidth = 1, label="Analyzer mean")
         if self.config["plot_type"]["comparison"]["channels"]["single_sample"]["activated"]:
             # single input data
+            color_base = self.upsample(self.normalize(analyzer_for_class[random_index,:], -1, 1),5)
+            y = self.upsample(self.normalize(input_for_class[random_index,:], -1, 1), 5)
+            x = range(len(y))
             if self.config["plot_type"]["comparison"]["channels"]["single_sample"]["scatter"]:
-                ax.scatter(range(len(input_for_class[random_index,:])), self.normalize(input_for_class[random_index,:], -1, 1), color="r", label="Input input", s=2)
+                #ax.scatter(range(len(input_for_class[random_index,:])), self.normalize(input_for_class[random_index,:], -1, 1), color="r", label="Input input", s=2)
+                cmap = plt.get_cmap(custom_cmap)
+                norm = plt.Normalize(-1, 1)
+                line_colors = cmap(norm(color_base))
+                ax.scatter(x, y, color=line_colors, label="Single input", s=3)
+                sm = ScalarMappable(cmap=cmap, norm=norm)
+                sm.set_array([])  # Set an empty array or list
+                cbar = fig.colorbar(sm, ax=ax)
+                cbar.set_label('Analyzer value')
             elif self.config["plot_type"]["comparison"]["channels"]["single_sample"]["line"]:
-                ax.plot(self.normalize(input_for_class[random_index,:], -1, 1), color="r", linestyle = "dashed", linewidth = 1, label="Single input")
-        if self.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["activated"]:
-            # mean input data
-            if self.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["scatter"]:
-                ax.scatter(range(len(input_class_mean[0,:])), self.normalize(input_class_mean[0,:], -1, 1), color="r", label="Input mean", s=2)
-            elif self.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["line"]:
-                ax.plot(self.normalize(input_class_mean[0,:], -1, 1), color="r", linewidth = 1, label="Input mean")
-        if self.config["plot_type"]["comparison"]["channels"]["single_analyzer_score"]["activated"]:
-            # single analyzer
-            if self.config["plot_type"]["comparison"]["channels"]["single_analyzer_score"]["scatter"]:
-                ax.scatter(range(len(analyzer_for_class[random_index,:])), self.normalize(analyzer_for_class[random_index,:], -1, 1), color="k", label="Single analyzer", s=2)
-            elif self.config["plot_type"]["comparison"]["channels"]["single_analyzer_score"]["line"]:
-                ax.plot(self.normalize(analyzer_for_class[random_index,:], -1, 1), color="k", linestyle = "dashed", linewidth = 1, label="Single analyzer")
-        if self.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["activated"]:
-            # mean analyzer
-            if self.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["scatter"]:
-                ax.scatter(range(len(analyzer_class_mean[0,:])), self.normalize(analyzer_class_mean[0,:], -1, 1), color="k", label="Analyzer mean", s=2)
-            elif self.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["line"]:
-                ax.plot(self.normalize(analyzer_class_mean[0,:], -1, 1), color="k", linewidth = 1, label="Analyzer mean")
+                points = np.array([x, y]).T.reshape(-1, 1, 2)
+                segments = np.concatenate([points[:-1], points[1:]], axis=1)
+                norm = plt.Normalize(-1, 1)
+                lc = LineCollection(segments, cmap=custom_cmap, norm=norm)
+                lc.set_array(color_base)
+                lc.set_linewidth(3)
+                line = ax.add_collection(lc)
+                #ax.plot(x, color_base)
+                sm = ScalarMappable(cmap=custom_cmap, norm=norm)
+                sm.set_array([])
+                cbar = fig.colorbar(sm, ax=ax)
+                cbar.ax.tick_params(labelsize=8)
+                cbar.set_label('Analyzer value')
+                ax.set_xlim(0, len(y))
+                ax.set_ylim(-1.1, 1.1)
         plt.figure(figsize=(10,6))
-        plt.plot(self.normalize(input_class_mean[0,:], -1, 1), color="r", label="Input")
-        plt.plot(self.normalize(analyzer_class_mean[0,:], -1, 1), color="k", linestyle = "dashed", linewidth = 0.5, label="Analyzer")
 
         for h_line in np.arange(-1,1.25,0.5):
             ax.axhline(y = h_line, color = "gray", linestyle = "dashed", linewidth = 0.25)

@@ -24,7 +24,7 @@ QPushButton, QToolButton, QCommandLinkButton{
 QPushButton::default, QToolButton::default, QCommandLinkButton::default{
     border: 2px solid transparent;
     color: #FFFFFF;
-    background-color: qlineargradient(spread:pad, x1:0.5, y1:0, x2:0.5, y2:1, stop:0 #84afe5, stop:1 #1168e4);
+    background-color: qlineargradient(spread:pad, x1:0.5, y1:0, x2:0.5, y2:1, stop:0 #b0e0e6, stop:1 #008b8b);
 }
 QPushButton:hover, QToolButton:hover, QCommandLinkButton:hover{
     color: #3d3d3d;

@@ -11,7 +11,9 @@ class Analyzer():
                     "upper_tabs": {}, # QWidget() elements
                     "bottom_tabs": {},
                     "upper_figures": [], #own Figures_() objects
-                    "bottom_figures": []
+                    "bottom_figures": [],
+                    "upper_checkboxes": [],
+                    "bottom_checkboxes": []
                 }
         
     def increase_upper_plot_count(self):

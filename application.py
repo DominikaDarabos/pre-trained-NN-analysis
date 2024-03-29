@@ -12,6 +12,7 @@ import importlib.util
 import io
 import innvestigate
 from PySide6.QtWidgets import QSizePolicy
+import time
 
 from NewModelDialog import NewModelDialog
 from NewFigureDialog import NewFigureDialog
@@ -214,7 +215,7 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
             fig = plt.figure(figsize=(self.width()*0.26/100, self.height()*0.47/100))
             ax = fig.add_subplot(111)
             for row in rows_to_plot:
-                ax.plot(row, color=(1,0.3,0.3))
+                ax.plot(row, color="indianred")
             ax.grid(False)
             canvas = FigureCanvas(fig)
             scene.addWidget(canvas)
@@ -266,7 +267,7 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
                     innvestigate.create_analyzer("lrp.alpha_1_beta_0", self.project.model,\
                     disable_model_checks=True, neuron_selection_mode=self.project.analyzers["LRP_AB"].activation)
 
-                self.project.analyzers["LRP_Z"].analyzer_output = self.project.analyzers["LRP_Z"].innvestigate_analyzer.analyze(self.project.test_x)
+                self.project.analyzers["LRP_AB"].analyzer_output = self.project.analyzers["LRP_AB"].innvestigate_analyzer.analyze(self.project.test_x)
 
             if self.project.analyzers["LRP_AB"].alpha == 2 and self.project.analyzers["LRP_AB"].beta == 1:
                 self.project.analyzers["LRP_AB"].innvestigate_analyzer = \
@@ -283,9 +284,18 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         elif self.changedTab == "bottom":
             position = "bottom"
             tab_number = self.active_bottom_plot
-        checked_checkboxes = [checkbox for checkbox in self.hist_checkboxes if checkbox.isChecked()]
-        classes = [int(checkbox.objectName().split("_")[-1])-1 for checkbox in checked_checkboxes]
-        self.load_plot(position, tab_number, classes = classes)
+        else:
+            print("RETURN")
+            return
+        analyzer = self.get_current_analyzer()
+        figure = self.project.analyzers[analyzer].ui_elements_config[f"{position}_figures"][tab_number]
+        hist_checkboxes = self.project.analyzers[analyzer].ui_elements_config[f"{position}_checkboxes"][tab_number]
+        checked_checkboxes = [checkbox for checkbox in hist_checkboxes if checkbox.isChecked()]
+        classes = [int(checkbox.objectName().split("_")[-1]) for checkbox in checked_checkboxes]
+        figure.config["channels"] = classes
+        print("AFTER CHANGE: ", figure.config)
+        print("POSITION, TAB_NUMBER: ", position, tab_number)
+        self.load_plot(position, tab_number)
 
 
     def comp_checkbox_state_changed(self):
@@ -297,28 +307,22 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
             tab_number = self.active_bottom_plot
         analyzer = self.get_current_analyzer()
         figure = self.project.analyzers[analyzer].ui_elements_config[f"{position}_figures"][tab_number]
-        if self.comp_checkboxes[0].isChecked():
+        comp_checkboxes = self.project.analyzers[analyzer].ui_elements_config[f"{position}_checkboxes"][tab_number]
+        if comp_checkboxes[0].isChecked():
             if not figure.config["plot_type"]["comparison"]["channels"]["single_sample"]["activated"]:
                 figure.config["plot_type"]["comparison"]["channels"]["single_sample"]["activated"] = True
                 figure.config["plot_type"]["comparison"]["channels"]["single_sample"]["scatter"] = False
                 figure.config["plot_type"]["comparison"]["channels"]["single_sample"]["line"] = True
         else:
             figure.config["plot_type"]["comparison"]["channels"]["single_sample"]["activated"] = False
-        if self.comp_checkboxes[1].isChecked():
+        if comp_checkboxes[1].isChecked():
             if not figure.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["activated"]:
                 figure.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["activated"] = True
                 figure.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["scatter"] = False
                 figure.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["line"] = True
         else:
             figure.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["activated"] = False
-        if self.comp_checkboxes[2].isChecked():
-            if not figure.config["plot_type"]["comparison"]["channels"]["single_analyzer_score"]["activated"]:
-                figure.config["plot_type"]["comparison"]["channels"]["single_analyzer_score"]["activated"] = True
-                figure.config["plot_type"]["comparison"]["channels"]["single_analyzer_score"]["scatter"] = False
-                figure.config["plot_type"]["comparison"]["channels"]["single_analyzer_score"]["line"] = True
-        else:
-            figure.config["plot_type"]["comparison"]["channels"]["single_analyzer_score"]["activated"] = False
-        if self.comp_checkboxes[3].isChecked():
+        if comp_checkboxes[2].isChecked():
             if not figure.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["activated"]:
                 figure.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["activated"] = True
                 figure.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["scatter"] = False
@@ -399,46 +403,52 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         channelsFrame.setFrameShadow(QFrame.Raised)
         verticalLayout_3 = QVBoxLayout(channelsFrame)
         verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.comp_checkboxes = []
+        comp_checkboxes = []
         if figure.is_comparison():
             plot_Channel_1 = QCheckBox(channelsFrame)
             plot_Channel_1.setObjectName(f"{place}Plot_{plotCount}_Channel_1")
             plot_Channel_1.setText(QCoreApplication.translate("MainWindow", u"Single sample", None))
             verticalLayout_3.addWidget(plot_Channel_1)
-            plot_Channel_1.stateChanged.connect(self.comp_checkbox_state_changed)
+            if figure.config["plot_type"]["comparison"]["channels"]["single_sample"]["scatter"]\
+                or figure.config["plot_type"]["comparison"]["channels"]["single_sample"]["line"]:
+                plot_Channel_1.setChecked(True)
 
             plot_Channel_2 = QCheckBox(channelsFrame)
             plot_Channel_2.setObjectName(f"{place}Plot_{plotCount}_Channel_2")
             plot_Channel_2.setText(QCoreApplication.translate("MainWindow", u"Average sample", None))
             verticalLayout_3.addWidget(plot_Channel_2)
-            plot_Channel_2.stateChanged.connect(self.comp_checkbox_state_changed)
-
-            plot_Channel_3 = QCheckBox(channelsFrame)
-            plot_Channel_3.setObjectName(f"{place}Plot_{plotCount}_Channel_3")
-            plot_Channel_3.setText(QCoreApplication.translate("MainWindow", u"Single analyzer", None))
-            verticalLayout_3.addWidget(plot_Channel_3)
-            plot_Channel_3.stateChanged.connect(self.comp_checkbox_state_changed)
+            if figure.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["scatter"]\
+                or figure.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["line"]:
+                plot_Channel_2.setChecked(True)
             
-            plot_Channel_4 = QCheckBox(channelsFrame)
-            plot_Channel_4.setObjectName(f"{place}Plot_{plotCount}_Channel_4")
-            plot_Channel_4.setText(QCoreApplication.translate("MainWindow", u"Average analyzer", None))
-            verticalLayout_3.addWidget(plot_Channel_4)
-            plot_Channel_4.stateChanged.connect(self.comp_checkbox_state_changed)
+            plot_Channel_3 = QCheckBox(channelsFrame)
+            plot_Channel_3.setObjectName(f"{place}Plot_{plotCount}_Channel_4")
+            plot_Channel_3.setText(QCoreApplication.translate("MainWindow", u"Average analyzer", None))
+            verticalLayout_3.addWidget(plot_Channel_3)
+            if figure.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["scatter"]\
+                or figure.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["line"]:
+                plot_Channel_3.setChecked(True)
 
-            self.comp_checkboxes.append(plot_Channel_1)
-            self.comp_checkboxes.append(plot_Channel_2)
-            self.comp_checkboxes.append(plot_Channel_3)
-            self.comp_checkboxes.append(plot_Channel_4)
+            comp_checkboxes.append(plot_Channel_1)
+            comp_checkboxes.append(plot_Channel_2)
+            comp_checkboxes.append(plot_Channel_3)
+            plot_Channel_1.stateChanged.connect(self.comp_checkbox_state_changed)
+            plot_Channel_2.stateChanged.connect(self.comp_checkbox_state_changed)
+            plot_Channel_3.stateChanged.connect(self.comp_checkbox_state_changed)
+            self.project.analyzers[analyzer].ui_elements_config[f"{place}_checkboxes"].append(comp_checkboxes)
             
         if figure.is_hist_distribution():
-            self.hist_checkboxes = [] 
+            hist_checkboxes = [] 
             for i in range(self.project.number_of_classes):
                 checkbox = QCheckBox(channelsFrame)
-                checkbox.setObjectName(f"plot_Channel_{i+1}")
-                checkbox.setText(QCoreApplication.translate("MainWindow", f"Class {i+1}", None))
-                checkbox.stateChanged.connect(self.hist_checkbox_state_changed) 
+                checkbox.setObjectName(f"plot_Channel_{i}")
+                checkbox.setText(QCoreApplication.translate("MainWindow", f"Class {i}", None))
+                if i in figure.config["channels"]:
+                    checkbox.setChecked(True)
+                checkbox.stateChanged.connect(self.hist_checkbox_state_changed)
                 verticalLayout_3.addWidget(checkbox)
-                self.hist_checkboxes.append(checkbox)
+                hist_checkboxes.append(checkbox)
+            self.project.analyzers[analyzer].ui_elements_config[f"{place}_checkboxes"].append(hist_checkboxes)
         gridLayout_5.addWidget(channelsFrame, 1, 0, 1, 1)
         gridLayout_3.addWidget(figureInfoFrame, 0, 2, 1, 1)
         plot = QGraphicsView(plotTab)
@@ -451,19 +461,23 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         tabSize = plotTab.size()
         plot.setFixedSize(tabSize.width() * 0.8, tabSize.height() - 20)
         
+        self.changedTab = place
         if place == "upper":
             self.upperPlotTabWidget.addTab(plotTab, f"Tab {plotCount + 1}")
+            self.upperPlotTabWidget.setCurrentIndex(plotCount)
+            self.active_upper_plot = plotCount
             self.project.analyzers[analyzer].increase_upper_plot_count()
         if place == "bottom":
             self.bottomPlotTabWidget.addTab(plotTab, f"Tab {plotCount + 1}")
+            self.bottomPlotTabWidget.setCurrentIndex(plotCount)
+            self.active_bottom_plot = plotCount
             self.project.analyzers[analyzer].increase_bottom_plot_count()
         self.project.analyzers[analyzer].ui_elements_config[f"{place}_tabs"][f"tab_{plotCount}"] = plotTab
-
         self.load_plot(place, plotCount)
         self.print_figure_attributes()
 
 
-    def load_plot(self, position, tab_number, classes = None):
+    def load_plot(self, position, tab_number):
         analyzer = self.get_current_analyzer()
         current_tab = self.project.analyzers[analyzer].ui_elements_config[f"{position}_tabs"].get(f"tab_{tab_number}")
         if current_tab:
@@ -475,7 +489,7 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
                 print(f"{position}Plot_{tab_number} not found")
         figure = self.project.analyzers[analyzer].ui_elements_config[f"{position}_figures"][tab_number]
         if "distribution" in figure.config["plot_type"] and figure.config["plot_type"]["distribution"]["histogram"]["activated"]:
-            fig = figure.plot_relevance_score_distribution(self.project, analyzer, figureSize = current_plot.size(), classes = classes)
+            fig = figure.plot_relevance_score_distribution(self.project, analyzer, figureSize = current_plot.size())
         elif "distribution" in figure.config["plot_type"] and figure.config["plot_type"]["distribution"]["box_plot"]["activated"]:
             fig = figure.plot_grouped_boxplot(self.project, analyzer, figureSize = current_plot.size())
         elif "comparison" in figure.config["plot_type"]:
