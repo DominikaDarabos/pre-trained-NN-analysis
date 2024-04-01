@@ -24,7 +24,7 @@ class Ui_Dialog(object):
     def setupUi(self, Dialog):
         if not Dialog.objectName():
             Dialog.setObjectName(u"Dialog")
-        Dialog.resize(759, 447)
+        Dialog.resize(759, 486)
         self.gridLayout_2 = QGridLayout(Dialog)
         self.gridLayout_2.setObjectName(u"gridLayout_2")
         self.baseFrame = QFrame(Dialog)
@@ -103,11 +103,22 @@ class Ui_Dialog(object):
         self.comboBox_IG = QComboBox(self.analyzerCheckboxFrame)
         self.comboBox_IG.addItem("")
         self.comboBox_IG.addItem("")
-        self.comboBox_IG.addItem("")
         self.comboBox_IG.setObjectName(u"comboBox_IG")
         self.comboBox_IG.setMinimumSize(QSize(100, 0))
 
         self.horizontalLayout.addWidget(self.comboBox_IG)
+
+        self.referenceLine = QLineEdit(self.analyzerCheckboxFrame)
+        self.referenceLine.setObjectName(u"referenceLine")
+        self.referenceLine.setMaximumWidth(100)
+
+        self.horizontalLayout.addWidget(self.referenceLine)
+
+        self.stepLine = QLineEdit(self.analyzerCheckboxFrame)
+        self.stepLine.setObjectName(u"stepLine")
+        self.stepLine.setMaximumWidth(100)
+
+        self.horizontalLayout.addWidget(self.stepLine)
 
 
         self.gridLayout_4.addLayout(self.horizontalLayout, 0, 0, 1, 1)
@@ -122,7 +133,6 @@ class Ui_Dialog(object):
         self.horizontalLayout_3.addWidget(self.checkBox_LRP_Z)
 
         self.comboBox_LRP_Z = QComboBox(self.analyzerCheckboxFrame)
-        self.comboBox_LRP_Z.addItem("")
         self.comboBox_LRP_Z.addItem("")
         self.comboBox_LRP_Z.addItem("")
         self.comboBox_LRP_Z.setObjectName(u"comboBox_LRP_Z")
@@ -143,7 +153,6 @@ class Ui_Dialog(object):
         self.gridLayout.addWidget(self.checkBox_LRP_AB, 0, 0, 1, 1)
 
         self.comboBox_LRP_AB = QComboBox(self.analyzerCheckboxFrame)
-        self.comboBox_LRP_AB.addItem("")
         self.comboBox_LRP_AB.addItem("")
         self.comboBox_LRP_AB.addItem("")
         self.comboBox_LRP_AB.setObjectName(u"comboBox_LRP_AB")
@@ -173,7 +182,6 @@ class Ui_Dialog(object):
         self.gridLayout_3.addWidget(self.checkBox_LRP_Epsilon, 0, 0, 1, 1)
 
         self.comboBox_LRP_Epsilon = QComboBox(self.analyzerCheckboxFrame)
-        self.comboBox_LRP_Epsilon.addItem("")
         self.comboBox_LRP_Epsilon.addItem("")
         self.comboBox_LRP_Epsilon.addItem("")
         self.comboBox_LRP_Epsilon.setObjectName(u"comboBox_LRP_Epsilon")
@@ -223,17 +231,17 @@ class Ui_Dialog(object):
         self.checkBox_IG.setText(QCoreApplication.translate("Dialog", u"Integrated Gradients", None))
         self.comboBox_IG.setItemText(0, QCoreApplication.translate("Dialog", u"None", None))
         self.comboBox_IG.setItemText(1, QCoreApplication.translate("Dialog", u"Max activation", None))
-        self.comboBox_IG.setItemText(2, QCoreApplication.translate("Dialog", u"Index", None))
 
+        self.referenceLine.setText("")
+        self.referenceLine.setPlaceholderText(QCoreApplication.translate("Dialog", u"Reference input", None))
+        self.stepLine.setPlaceholderText(QCoreApplication.translate("Dialog", u"Steps", None))
         self.checkBox_LRP_Z.setText(QCoreApplication.translate("Dialog", u"Layer-wise relevance propagation - Z", None))
         self.comboBox_LRP_Z.setItemText(0, QCoreApplication.translate("Dialog", u"None", None))
         self.comboBox_LRP_Z.setItemText(1, QCoreApplication.translate("Dialog", u"Max activation", None))
-        self.comboBox_LRP_Z.setItemText(2, QCoreApplication.translate("Dialog", u"Index", None))
 
         self.checkBox_LRP_AB.setText(QCoreApplication.translate("Dialog", u"Layer-wise relevance propagation - ALPHA - BETA", None))
         self.comboBox_LRP_AB.setItemText(0, QCoreApplication.translate("Dialog", u"None", None))
         self.comboBox_LRP_AB.setItemText(1, QCoreApplication.translate("Dialog", u"Max activation", None))
-        self.comboBox_LRP_AB.setItemText(2, QCoreApplication.translate("Dialog", u"Index", None))
 
         self.AlphaBetaComboBox.setItemText(0, QCoreApplication.translate("Dialog", u"Alpha_2, Beta_1", None))
         self.AlphaBetaComboBox.setItemText(1, QCoreApplication.translate("Dialog", u"Alpha_1, Beta_0", None))
@@ -241,7 +249,6 @@ class Ui_Dialog(object):
         self.checkBox_LRP_Epsilon.setText(QCoreApplication.translate("Dialog", u"Layer-wise relevance propagation - EPSILON", None))
         self.comboBox_LRP_Epsilon.setItemText(0, QCoreApplication.translate("Dialog", u"None", None))
         self.comboBox_LRP_Epsilon.setItemText(1, QCoreApplication.translate("Dialog", u"Max activation", None))
-        self.comboBox_LRP_Epsilon.setItemText(2, QCoreApplication.translate("Dialog", u"Index", None))
 
         self.EpsilonInput.setPlaceholderText(QCoreApplication.translate("Dialog", u"epsilon", None))
         self.createButton.setText(QCoreApplication.translate("Dialog", u"Create Project", None))

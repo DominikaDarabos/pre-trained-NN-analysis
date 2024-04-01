@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>759</width>
-    <height>447</height>
+    <height>486</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -140,11 +140,23 @@
                   <string>Max activation</string>
                  </property>
                 </item>
-                <item>
-                 <property name="text">
-                  <string>Index</string>
-                 </property>
-                </item>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="referenceLine">
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="placeholderText">
+                 <string>Reference input</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_2">
+                <property name="placeholderText">
+                 <string>Steps</string>
+                </property>
                </widget>
               </item>
              </layout>
@@ -188,11 +200,6 @@
                   <string>Max activation</string>
                  </property>
                 </item>
-                <item>
-                 <property name="text">
-                  <string>Index</string>
-                 </property>
-                </item>
                </widget>
               </item>
              </layout>
@@ -234,11 +241,6 @@
                 <item>
                  <property name="text">
                   <string>Max activation</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>Index</string>
                  </property>
                 </item>
                </widget>
@@ -308,11 +310,6 @@
                 <item>
                  <property name="text">
                   <string>Max activation</string>
-                 </property>
-                </item>
-                <item>
-                 <property name="text">
-                  <string>Index</string>
                  </property>
                 </item>
                </widget>

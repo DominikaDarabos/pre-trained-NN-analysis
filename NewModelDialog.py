@@ -1,12 +1,15 @@
 from PySide6 import QtWidgets
 from utils import main, new_model
 from Project import Project
-import re
+import re, os, sys
 from Analyzer import Analyzer
+import h5py
+import importlib.util
+import innvestigate
+import tensorflow as tf
 
 activations = {
     "None": "all",
-    "Index": "index",
     "Max activation": "max_activation"
 }
 
@@ -22,11 +25,15 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
         self.selectCustomButton.clicked.connect(self.select_custom_dialog)
         self.selectInputButton.clicked.connect(self.select_input_dialog)
 
+        #TODO:
+        self.load_input_file()
+
     # Slot to show the main window
     def create_project(self):
         #self.main_window.showMaximized()  # Show the main window
         #self.app.set_shadow_effect(enabled=False)
         self.collect_selected_analyzers()
+        self.load_model_files()
         self.app.project = self.project
         self.app.load_start_window()
         self.hide()  # Hide the dialog
@@ -54,37 +61,92 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
         if file:
             self.project.set_input_file(file)
             self.selectInputLine.setText(file)
-    
+            self.load_input_file()
+
     def collect_selected_analyzers(self):
         # Get checked state of checkboxes
-        """
-        self.project.config["analyzers"]["IG"]["checked"]            = self.checkBox_IG.isChecked()
-        self.project.config["analyzers"]["LRP_Z"]["checked"]         = self.checkBox_LRP_Z.isChecked()
-        self.project.config["analyzers"]["LRP_AB"]["checked"]        = self.checkBox_LRP_AB.isChecked()
-        self.project.config["analyzers"]["LRP_Epsilon"]["checked"]   = self.checkBox_LRP_Epsilon.isChecked()
-
-        self.project.config["analyzers"]["IG"]["activation"]             = activations[self.comboBox_IG.currentText()]
-        self.project.config["analyzers"]["LRP_Z"]["activation"]          = activations[self.comboBox_LRP_Z.currentText()]
-        self.project.config["analyzers"]["LRP_AB"]["activation"]         = activations[self.comboBox_LRP_AB.currentText()]
-        self.project.config["analyzers"]["LRP_Epsilon"]["activation"]    = activations[self.comboBox_LRP_Epsilon.currentText()]
-        """
         if self.checkBox_IG.isChecked():
-            self.project.analyzers["IG"] = Analyzer(reference_input = 0, steps = 64)
+            try:
+                ref = int(self.referenceLine.text())
+            except:
+                ref = 0
+                print("ref is set")
+            try:
+                step = int(self.stepLine.text())
+            except:
+                step = 64
+                print("step is set")
+            self.project.analyzers["IG"] = Analyzer(reference_input = ref, steps = step)
             self.project.analyzers["IG"].activation = activations[self.comboBox_IG.currentText()]
         if self.checkBox_LRP_Z.isChecked():
-            self.project.analyzers["LRP_Z"] = Analyzer()
-            self.project.analyzers["LRP_Z"].activation = activations[self.comboBox_LRP_Z.currentText()]
+            if self.comboBox_LRP_Z.currentText().startswith("Index"):
+                self.project.analyzers["LRP_Z"] = Analyzer(neuron = int(self.comboBox_LRP_Z.currentText().split(" ")[-1]))
+                self.project.analyzers["LRP_Z"].activation = "index"
+            else:
+                self.project.analyzers["LRP_Z"] = Analyzer()
+                self.project.analyzers["LRP_Z"].activation = activations[self.comboBox_LRP_Z.currentText()]
         if self.checkBox_LRP_AB.isChecked():
             alphaBetaString = self.AlphaBetaComboBox.currentText()
             numbers_as_strings = re.findall(r'\d+', alphaBetaString)
             numbers_as_integers = [int(num_str) for num_str in numbers_as_strings]
-            self.project.analyzers["LRP_AB"] =  Analyzer(alpha = numbers_as_integers[0], beta = numbers_as_integers[1])
-            self.project.analyzers["LRP_AB"].activation = activations[self.comboBox_LRP_AB.currentText()]
+            if self.comboBox_LRP_AB.currentText().startswith("Index"):
+                self.project.analyzers["LRP_AB"] =  Analyzer(alpha = numbers_as_integers[0], beta = numbers_as_integers[1],\
+                                                              neuron = int(self.comboBox_LRP_AB.currentText().split(" ")[-1]))
+                self.project.analyzers["LRP_AB"].activation = "index"
+            else:
+                self.project.analyzers["LRP_AB"] =  Analyzer(alpha = numbers_as_integers[0], beta = numbers_as_integers[1])
+                self.project.analyzers["LRP_AB"].activation = activations[self.comboBox_LRP_AB.currentText()]
         if self.checkBox_LRP_Epsilon.isChecked():
             try:
                 eps = float(self.EpsilonInput.text())
-                self.project.analyzers["LRP_Epsilon"] = Analyzer(epsilon = eps)
-                self.project.analyzers["LRP_Epsilon"].activation = activations[self.comboBox_LRP_Epsilon.currentText()]
+                if self.comboBox_LRP_Epsilon.currentText().startswith("Index"):
+                    self.project.analyzers["LRP_Epsilon"] = Analyzer(epsilon = eps, neuron = int(self.comboBox_LRP_Epsilon.currentText().split(" ")[-1]))
+                    self.project.analyzers["LRP_Epsilon"].activation = "index"
+                else:
+                    self.project.analyzers["LRP_Epsilon"] = Analyzer(epsilon = eps)
+                    self.project.analyzers["LRP_Epsilon"].activation = activations[self.comboBox_LRP_Epsilon.currentText()]
             except ValueError:
                 pass
+    
+    def load_model_files(self):
+        if os.path.isfile(self.project.custom_object_file_path):
+            file_path = self.project.custom_object_file_path
+            splitted_path = file_path.split("/")
+            class_name = splitted_path[-1].split(".")[0]
+
+            module_dir = "/".join(splitted_path[:-1])
+            sys.path.append(module_dir)
+
+            module_name = class_name
+            spec = importlib.util.spec_from_file_location(module_name, file_path)
+            my_module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(my_module)
+
+            my_class = getattr(my_module, class_name)
+            custom_objects = {} 
+            custom_objects[class_name] = my_class
+
+            print("Successfully loaded custom object file")
+        if os.path.isfile(self.project.model_file_path):
+            self.project.model = tf.keras.models.load_model(self.project.model_file_path, custom_objects=custom_objects)
+            self.project.model_wo_softmax = innvestigate.model_wo_softmax(self.project.model)
+            print("Successfully loaded model file")
+
+        if self.project.test_x is not None:
+            self.project.predictions = self.project.model.predict(self.project.test_x, verbose = 2)
+    
+    def load_input_file(self):
+        if os.path.isfile(self.project.input_file_path):
+            try:
+                with h5py.File(self.project.input_file_path, 'r') as hf:
+                    self.project.test_x = hf['test_x'][:]
+                    self.project.test_y = hf['test_y'][:]
+                    self.project.number_of_classes = self.project.test_y.shape[1]
+            except:
+                self.selectInputLine.setText(f"Error in loading {self.project.input_file_path}.")
+            for possible_class_num in range(self.project.test_y.shape[1]):
+                self.comboBox_LRP_Z.addItem(f"Index {possible_class_num}")
+                self.comboBox_LRP_AB.addItem(f"Index {possible_class_num}")
+                self.comboBox_LRP_Epsilon.addItem(f"Index {possible_class_num}")
+
             

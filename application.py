@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 from PySide6 import QtWidgets, QtCore
-from PySide6.QtWidgets import QTextBrowser, QGraphicsScene, QVBoxLayout, QFrame, QGridLayout, QCheckBox, QGraphicsView, QWidget, QTabWidget, QLabel, QListWidget, QHBoxLayout, QPushButton
+from PySide6.QtWidgets import QMenu, QDialog,QFileDialog, QTextBrowser, QGraphicsScene, QVBoxLayout, QFrame, QGridLayout, QCheckBox, QGraphicsView, QWidget, QTabWidget, QLabel, QListWidget, QHBoxLayout, QPushButton
 from PySide6.QtCore import QSize, QCoreApplication, Qt
 from utils import main
 import sys, os
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
-import h5py
-import importlib.util
+
 import io
 import innvestigate
 from PySide6.QtWidgets import QSizePolicy
 import time
+from PySide6.QtGui import QIcon
 
 from NewModelDialog import NewModelDialog
 from NewFigureDialog import NewFigureDialog
@@ -40,11 +40,14 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         # open in full screen
         self.showMaximized()
         self.setWindowTitle("Analyzer application")
+        self.setWindowIcon(QIcon('ana.png'))
         self.project = None
         self.active_upper_plot = None
         self.active_bottom_plot = None
         self.changedTab = None
         
+    def show_menu(self):
+        self.dropdown_menu.exec(self.menuButton.mapToGlobal(self.menuButton.rect().bottomLeft()))
 
     def get_current_analyzer(self):
         return str(self.listWidget.currentItem().text())
@@ -77,38 +80,6 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         self.custom_object_file_path = None
         self.input_file_path = None
     
-    def load_files(self):
-        if os.path.isfile(self.project.custom_object_file_path):
-            file_path = self.project.custom_object_file_path
-            splitted_path = file_path.split("/")
-            class_name = splitted_path[-1].split(".")[0]
-
-            module_dir = "/".join(splitted_path[:-1])
-            sys.path.append(module_dir)
-
-            module_name = class_name
-            spec = importlib.util.spec_from_file_location(module_name, file_path)
-            my_module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(my_module)
-
-            my_class = getattr(my_module, class_name)
-            custom_objects = {} 
-            custom_objects[class_name] = my_class
-
-            print("Successfully loaded custom object file")
-        if os.path.isfile(self.project.model_file_path):
-            self.project.model = tf.keras.models.load_model(self.project.model_file_path, custom_objects=custom_objects)
-            self.project.model_wo_softmax = innvestigate.model_wo_softmax(self.project.model)
-            print("Successfully loaded model file")
-        if os.path.isfile(self.project.input_file_path):
-            with h5py.File(self.project.input_file_path, 'r') as hf:
-                self.project.test_x = hf['test_x'][:]
-                self.project.test_y = hf['test_y'][:]
-                self.project.predictions = self.project.model.predict(self.project.test_x, verbose = 2)
-            self.project.number_of_classes = self.project.test_y.shape[1]
-            print("Successfully loaded input file")
-
-    
     def on_sidemenu_clicked(self, item):
         self.upperPlotTabWidget.clear()
         self.bottomPlotTabWidget.clear()
@@ -123,19 +94,63 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
             bottomPlot = self.project.analyzers[analyzer].ui_elements_config["bottom_tabs"][f"tab_{tab_idx}"]
             self.bottomPlotTabWidget.addTab(bottomPlot, f"Tab {tab_idx + 1}")
             self.load_plot("bottom", tab_idx)
+
+    def create_dropdown_menu(self,parent):
+        menu = QMenu(parent)
+        clearUpper = menu.addAction("Clear upper tabs")
+        clearBottom = menu.addAction("Clear bottom tabs")
+        saveUpper = menu.addAction("Save current upper figure")
+        saveBottom = menu.addAction("Save current bottom figure")
+        exit = menu.addAction("Exit").triggered.connect(self.close)
+
+        saveUpper.triggered.connect(lambda: self.saveFigure("upper"))
+        saveBottom.triggered.connect(lambda: self.saveFigure("bottom"))
+
+        clearUpper.triggered.connect(lambda: self.clear_figure("upper"))
+        clearBottom.triggered.connect(lambda: self.clear_figure("bottom"))
+        return menu
+
+    def saveFigure(self, position):
+        if position == "upper":
+            tab_number = self.active_upper_plot
+        elif position == "bottom":
+            tab_number = self.active_bottom_plot
+        analyzer = self.get_current_analyzer()
+        figure = self.project.analyzers[analyzer].ui_elements_config[f"{position}_figures"][tab_number]
+        fig = figure.config["fig"]
+        print("FIG: ", fig)
+        # Now you can save the figure as needed
+        file_path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save Figure", "", "PNG Files (*.png);;JPEG Files (*.jpg)")
+        if file_path:
+            fig.savefig(file_path, dpi = 150)
+            print(f"Figure saved to: {file_path}")
     
+    def clear_figure(self, place):
+        if place == "upper":
+            self.active_upper_plot = None
+            self.upperPlotTabWidget.clear()
+        if place == "bottom":
+            self.active_bottom_plot = None
+            self.bottomPlotTabWidget.clear()
+
+        analyzer = self.get_current_analyzer()
+        self.project.analyzers[analyzer].ui_elements_config[f"{place}_plot_count"] = 0
+        self.project.analyzers[analyzer].ui_elements_config[f"{place}_tabs"] = {}
+        self.project.analyzers[analyzer].ui_elements_config[f"{place}_figures"] = []
+        self.project.analyzers[analyzer].ui_elements_config[f"{place}_checkboxes"] = []
+        
     def load_start_window(self):
 
         self.fill_base_window()
-   
         self.upper_new_plot_button.clicked.connect(self.show_create_figure_dialog)
         self.bottom_new_plot_button.clicked.connect(self.show_create_figure_dialog)
         self.upperPlotTabWidget.currentChanged.connect(self.upper_tab_changed)
         self.bottomPlotTabWidget.currentChanged.connect(self.bottom_tab_changed)
+        self.dropdown_menu = self.create_dropdown_menu(self.menuButton)
+        self.menuButton.clicked.connect(self.show_menu)
 
         #self.showMaximized()
         self.populate_list_widget()
-        self.load_files()
         self.populate_analyzers()
         
 
@@ -248,8 +263,11 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
             self.project.analyzers["LRP_Z"].innvestigate_analyzer = \
                 innvestigate.create_analyzer("lrp.z", self.project.model, disable_model_checks=True,\
                 neuron_selection_mode=self.project.analyzers["LRP_Z"].activation)
-
-            self.project.analyzers["LRP_Z"].analyzer_output = self.project.analyzers["LRP_Z"].innvestigate_analyzer.analyze(self.project.test_x)
+            if self.project.analyzers["LRP_Z"].activation == "index":
+                self.project.analyzers["LRP_Z"].analyzer_output = self.project.analyzers["LRP_Z"].innvestigate_analyzer.analyze(self.project.test_x,\
+                                                                                                    neuron_selection = self.project.analyzers["LRP_Z"].neuron)
+            else:
+                self.project.analyzers["LRP_Z"].analyzer_output = self.project.analyzers["LRP_Z"].innvestigate_analyzer.analyze(self.project.test_x)
 
         ### create LRP_EPSILON ###
         if "LRP_Epsilon" in self.project.analyzers:
@@ -257,8 +275,11 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
                 innvestigate.create_analyzer("lrp.epsilon", self.project.model,\
                 disable_model_checks=True, neuron_selection_mode=self.project.analyzers["LRP_Epsilon"].activation,\
                 **{"epsilon": self.project.analyzers["LRP_Epsilon"].epsilon})
-
-            self.project.analyzers["LRP_Epsilon"].analyzer_output = self.project.analyzers["LRP_Epsilon"].innvestigate_analyzer.analyze(self.project.test_x)
+            if self.project.analyzers["LRP_Epsilon"].activation == "index":
+                self.project.analyzers["LRP_Epsilon"].analyzer_output = self.project.analyzers["LRP_Epsilon"].innvestigate_analyzer.analyze(self.project.test_x,\
+                                                                                                                neuron_selection = self.project.analyzers["LRP_Epsilon"].neuron)
+            else:
+                self.project.analyzers["LRP_Epsilon"].analyzer_output = self.project.analyzers["LRP_Epsilon"].innvestigate_analyzer.analyze(self.project.test_x)
 
         ### create LRP_AB ###
         if "LRP_AB" in self.project.analyzers:
@@ -266,14 +287,15 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
                 self.project.analyzers["LRP_AB"].innvestigate_analyzer = \
                     innvestigate.create_analyzer("lrp.alpha_1_beta_0", self.project.model,\
                     disable_model_checks=True, neuron_selection_mode=self.project.analyzers["LRP_AB"].activation)
-
-                self.project.analyzers["LRP_AB"].analyzer_output = self.project.analyzers["LRP_AB"].innvestigate_analyzer.analyze(self.project.test_x)
-
             if self.project.analyzers["LRP_AB"].alpha == 2 and self.project.analyzers["LRP_AB"].beta == 1:
                 self.project.analyzers["LRP_AB"].innvestigate_analyzer = \
                     innvestigate.create_analyzer("lrp.alpha_2_beta_1", self.project.model,\
                     disable_model_checks=True, neuron_selection_mode=self.project.analyzers["LRP_AB"].activation)
 
+            if self.project.analyzers["LRP_AB"].activation == "index":
+                self.project.analyzers["LRP_AB"].analyzer_output = self.project.analyzers["LRP_AB"].innvestigate_analyzer.analyze(self.project.test_x,\
+                                                                                                        neuron_selection = self.project.analyzers["LRP_AB"].neuron)
+            else:
                 self.project.analyzers["LRP_AB"].analyzer_output = self.project.analyzers["LRP_AB"].innvestigate_analyzer.analyze(self.project.test_x)
 
 
@@ -306,6 +328,7 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
             position = "bottom"
             tab_number = self.active_bottom_plot
         analyzer = self.get_current_analyzer()
+        print(position, tab_number)
         figure = self.project.analyzers[analyzer].ui_elements_config[f"{position}_figures"][tab_number]
         comp_checkboxes = self.project.analyzers[analyzer].ui_elements_config[f"{position}_checkboxes"][tab_number]
         if comp_checkboxes[0].isChecked():
@@ -346,6 +369,8 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
             activation_type = "all neurons considered equally"
         elif self.project.analyzers[analyzer].activation == "max_activation":
             activation_type = "neurons with greater influence on the final decision are weighted"
+        elif self.project.analyzers[analyzer].activation == "index":
+            activation_type = f"neurons with influence on class {self.project.analyzers[analyzer].neuron}"
         if "comparison" in fig.config["plot_type"]:
             info_content = f"""
             Input and analyzer score signals<br/>
@@ -432,6 +457,9 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
             comp_checkboxes.append(plot_Channel_1)
             comp_checkboxes.append(plot_Channel_2)
             comp_checkboxes.append(plot_Channel_3)
+            plot_Channel_1.stateChanged.connect(lambda state, tab=place: setattr(self, "changedTab", tab))
+            plot_Channel_2.stateChanged.connect(lambda state, tab=place: setattr(self, "changedTab", tab))
+            plot_Channel_3.stateChanged.connect(lambda state, tab=place: setattr(self, "changedTab", tab))
             plot_Channel_1.stateChanged.connect(self.comp_checkbox_state_changed)
             plot_Channel_2.stateChanged.connect(self.comp_checkbox_state_changed)
             plot_Channel_3.stateChanged.connect(self.comp_checkbox_state_changed)
@@ -445,10 +473,13 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
                 checkbox.setText(QCoreApplication.translate("MainWindow", f"Class {i}", None))
                 if i in figure.config["channels"]:
                     checkbox.setChecked(True)
+                checkbox.stateChanged.connect(lambda state, tab=place: setattr(self, "changedTab", tab))
                 checkbox.stateChanged.connect(self.hist_checkbox_state_changed)
                 verticalLayout_3.addWidget(checkbox)
                 hist_checkboxes.append(checkbox)
             self.project.analyzers[analyzer].ui_elements_config[f"{place}_checkboxes"].append(hist_checkboxes)
+        if figure.is_box_distribution():
+            self.project.analyzers[analyzer].ui_elements_config[f"{place}_checkboxes"].append([])
         gridLayout_5.addWidget(channelsFrame, 1, 0, 1, 1)
         gridLayout_3.addWidget(figureInfoFrame, 0, 2, 1, 1)
         plot = QGraphicsView(plotTab)
@@ -505,7 +536,7 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
             axes.plot(x, y1, "-b", label="second one")
             axes.legend()
             axes.grid(True)
-
+        figure.config["fig"] = fig
         canvas = FigureCanvas(fig)
         scene.addWidget(canvas)
         current_plot.show()

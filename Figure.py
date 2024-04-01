@@ -13,7 +13,8 @@ class Figure_():
             "class": None,
             "channels" : None,
             "prediction_quality": "correct",
-            "plot_type":{}
+            "plot_type":{},
+            "fig" : None
         }
     
     def add_default_comparison(self):
@@ -56,6 +57,9 @@ class Figure_():
 
     def is_hist_distribution(self):
         return ("distribution" in self.config["plot_type"] and self.config["plot_type"]["distribution"]["histogram"]["activated"])
+    
+    def is_box_distribution(self):
+        return ("distribution" in self.config["plot_type"] and self.config["plot_type"]["distribution"]["box_plot"]["activated"])
 
 
     def normalize(self, data, min_val, max_val):
