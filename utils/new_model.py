@@ -33,51 +33,16 @@ class Ui_Dialog(object):
         self.baseFrame.setFrameShadow(QFrame.Raised)
         self.verticalLayout_4 = QVBoxLayout(self.baseFrame)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
-        self.modelSelectorLayout = QHBoxLayout()
-        self.modelSelectorLayout.setObjectName(u"modelSelectorLayout")
-        self.selectModelLine = QLineEdit(self.baseFrame)
-        self.selectModelLine.setObjectName(u"selectModelLine")
 
-        self.modelSelectorLayout.addWidget(self.selectModelLine)
-
-        self.selectModelButton = QToolButton(self.baseFrame)
-        self.selectModelButton.setObjectName(u"selectModelButton")
-
-        self.modelSelectorLayout.addWidget(self.selectModelButton)
+        self.gridLayout_2.addWidget(self.baseFrame, 0, 0, 1, 1)
 
 
-        self.verticalLayout_4.addLayout(self.modelSelectorLayout)
+        self.retranslateUi(Dialog)
 
-        self.modelSelectorLayout_2 = QHBoxLayout()
-        self.modelSelectorLayout_2.setObjectName(u"modelSelectorLayout_2")
-        self.selectCustomLine = QLineEdit(self.baseFrame)
-        self.selectCustomLine.setObjectName(u"selectCustomLine")
+        QMetaObject.connectSlotsByName(Dialog)
+    # setupUi
 
-        self.modelSelectorLayout_2.addWidget(self.selectCustomLine)
-
-        self.selectCustomButton = QToolButton(self.baseFrame)
-        self.selectCustomButton.setObjectName(u"selectCustomButton")
-
-        self.modelSelectorLayout_2.addWidget(self.selectCustomButton)
-
-
-        self.verticalLayout_4.addLayout(self.modelSelectorLayout_2)
-
-        self.modelSelectorLayout_3 = QHBoxLayout()
-        self.modelSelectorLayout_3.setObjectName(u"modelSelectorLayout_3")
-        self.selectInputLine = QLineEdit(self.baseFrame)
-        self.selectInputLine.setObjectName(u"selectInputLine")
-
-        self.modelSelectorLayout_3.addWidget(self.selectInputLine)
-
-        self.selectInputButton = QToolButton(self.baseFrame)
-        self.selectInputButton.setObjectName(u"selectInputButton")
-
-        self.modelSelectorLayout_3.addWidget(self.selectInputButton)
-
-
-        self.verticalLayout_4.addLayout(self.modelSelectorLayout_3)
-
+    def add_analyzer_frame(self):
         self.analyzersFrame = QFrame(self.baseFrame)
         self.analyzersFrame.setObjectName(u"analyzersFrame")
         self.analyzersFrame.setMinimumSize(QSize(0, 300))
@@ -205,29 +170,6 @@ class Ui_Dialog(object):
 
         self.verticalLayout_4.addWidget(self.analyzersFrame)
 
-        self.createButton = QPushButton(self.baseFrame)
-        self.createButton.setObjectName(u"createButton")
-        self.createButton.setMinimumSize(QSize(0, 40))
-
-        self.verticalLayout_4.addWidget(self.createButton)
-
-
-        self.gridLayout_2.addWidget(self.baseFrame, 0, 0, 1, 1)
-
-
-        self.retranslateUi(Dialog)
-
-        QMetaObject.connectSlotsByName(Dialog)
-    # setupUi
-
-    def retranslateUi(self, Dialog):
-        Dialog.setWindowTitle(QCoreApplication.translate("Dialog", u"Dialog", None))
-        self.selectModelLine.setText(QCoreApplication.translate("Dialog", u"Select model", None))
-        self.selectModelButton.setText(QCoreApplication.translate("Dialog", u"...", None))
-        self.selectCustomLine.setText(QCoreApplication.translate("Dialog", u"Select custom object python file", None))
-        self.selectCustomButton.setText(QCoreApplication.translate("Dialog", u"...", None))
-        self.selectInputLine.setText(QCoreApplication.translate("Dialog", u"Select input file", None))
-        self.selectInputButton.setText(QCoreApplication.translate("Dialog", u"...", None))
         self.checkBox_IG.setText(QCoreApplication.translate("Dialog", u"Integrated Gradients", None))
         self.comboBox_IG.setItemText(0, QCoreApplication.translate("Dialog", u"None", None))
         self.comboBox_IG.setItemText(1, QCoreApplication.translate("Dialog", u"Max activation", None))
@@ -251,6 +193,57 @@ class Ui_Dialog(object):
         self.comboBox_LRP_Epsilon.setItemText(1, QCoreApplication.translate("Dialog", u"Max activation", None))
 
         self.EpsilonInput.setPlaceholderText(QCoreApplication.translate("Dialog", u"epsilon", None))
+    
+    def add_input_frame(self):
+        self.modelSelectorLayout = QHBoxLayout()
+        self.modelSelectorLayout.setObjectName(u"modelSelectorLayout")
+        self.selectModelLine = QLineEdit(self.baseFrame)
+        self.selectModelLine.setObjectName(u"selectModelLine")
+        self.modelSelectorLayout.addWidget(self.selectModelLine)
+        self.selectModelButton = QToolButton(self.baseFrame)
+        self.selectModelButton.setObjectName(u"selectModelButton")
+        self.modelSelectorLayout.addWidget(self.selectModelButton)
+        self.verticalLayout_4.addLayout(self.modelSelectorLayout)
+
+        self.modelSelectorLayout_2 = QHBoxLayout()
+        self.modelSelectorLayout_2.setObjectName(u"modelSelectorLayout_2")
+        self.selectCustomLine = QLineEdit(self.baseFrame)
+        self.selectCustomLine.setObjectName(u"selectCustomLine")
+        self.modelSelectorLayout_2.addWidget(self.selectCustomLine)
+        self.selectCustomButton = QToolButton(self.baseFrame)
+        self.selectCustomButton.setObjectName(u"selectCustomButton")
+        self.modelSelectorLayout_2.addWidget(self.selectCustomButton)
+        self.verticalLayout_4.addLayout(self.modelSelectorLayout_2)
+
+        self.modelSelectorLayout_3 = QHBoxLayout()
+        self.modelSelectorLayout_3.setObjectName(u"modelSelectorLayout_3")
+        self.selectInputLine = QLineEdit(self.baseFrame)
+        self.selectInputLine.setObjectName(u"selectInputLine")
+        self.modelSelectorLayout_3.addWidget(self.selectInputLine)
+        self.selectInputButton = QToolButton(self.baseFrame)
+        self.selectInputButton.setObjectName(u"selectInputButton")
+        self.modelSelectorLayout_3.addWidget(self.selectInputButton)
+        self.verticalLayout_4.addLayout(self.modelSelectorLayout_3)
+
+        self.selectModelLine.setText(QCoreApplication.translate("Dialog", u"Select model", None))
+        self.selectModelButton.setText(QCoreApplication.translate("Dialog", u"...", None))
+        self.selectCustomLine.setText(QCoreApplication.translate("Dialog", u"Select custom object python file", None))
+        self.selectCustomButton.setText(QCoreApplication.translate("Dialog", u"...", None))
+        self.selectInputLine.setText(QCoreApplication.translate("Dialog", u"Select input file", None))
+        self.selectInputButton.setText(QCoreApplication.translate("Dialog", u"...", None))
+
+    def add_create_button(self):
+        self.createButton = QPushButton(self.baseFrame)
+        self.createButton.setObjectName(u"createButton")
+        self.createButton.setMinimumSize(QSize(0, 40))
+
+        self.verticalLayout_4.addWidget(self.createButton)
+
         self.createButton.setText(QCoreApplication.translate("Dialog", u"Create Project", None))
+
+    def retranslateUi(self, Dialog):
+        Dialog.setWindowTitle(QCoreApplication.translate("Dialog", u"Dialog", None))
+
+        
     # retranslateUi
 

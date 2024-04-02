@@ -73,14 +73,13 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
 
     # add elements to side menu bar
     def populate_list_widget(self):
-        sideMenuElements = [analyzer for analyzer in self.project.analyzers.keys()]
+        sideMenuElements = [analyzer for analyzer in self.project.analyzers.keys() if not self.listWidget.findItems(analyzer, QtCore.Qt.MatchExactly)]
         self.listWidget.addItems(sideMenuElements)
-
-        self.model_file_path = None
-        self.custom_object_file_path = None
-        self.input_file_path = None
     
     def on_sidemenu_clicked(self, item):
+        self.update_main_tab()
+    
+    def update_main_tab(self):
         self.upperPlotTabWidget.clear()
         self.bottomPlotTabWidget.clear()
         analyzer = self.get_current_analyzer()
@@ -101,6 +100,7 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         clearBottom = menu.addAction("Clear bottom tabs")
         saveUpper = menu.addAction("Save current upper figure")
         saveBottom = menu.addAction("Save current bottom figure")
+        newAnalyzer = menu.addAction("Add new analyzer")
         exit = menu.addAction("Exit").triggered.connect(self.close)
 
         saveUpper.triggered.connect(lambda: self.saveFigure("upper"))
@@ -108,6 +108,7 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
 
         clearUpper.triggered.connect(lambda: self.clear_figure("upper"))
         clearBottom.triggered.connect(lambda: self.clear_figure("bottom"))
+        newAnalyzer.triggered.connect(self.add_new_analyzer)
         return menu
 
     def saveFigure(self, position):
@@ -138,6 +139,13 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         self.project.analyzers[analyzer].ui_elements_config[f"{place}_tabs"] = {}
         self.project.analyzers[analyzer].ui_elements_config[f"{place}_figures"] = []
         self.project.analyzers[analyzer].ui_elements_config[f"{place}_checkboxes"] = []
+
+    def add_new_analyzer(self):
+        new_analyzer = NewModelDialog(self)
+        new_analyzer.createButton.setText("Create analyzers")
+        new_analyzer.createButton.clicked.disconnect(new_analyzer.create_project)
+        new_analyzer.createButton.clicked.connect(new_analyzer.create_analyzers)
+        new_analyzer.exec_()
         
     def load_start_window(self):
 
@@ -193,8 +201,26 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         self.project.model.summary()
         model_summary = sys.stdout.getvalue()
         sys.stdout = sys.__stdout__
+        model_summary = model_summary.replace('=','').replace('_','').replace('\t', ' ')
+        model_summary = model_summary.split("\n")
+        model_summary = [line for line in model_summary if line.strip()]
+        info = {
+            "model" : model_summary[0].split()[1],
+            "layers": [],
+            "shapes": [],
+            "params": []
+        }
+        for line_idx in range(len(model_summary) - 5):
+            idx = line_idx + 2
+            parts =  model_summary[idx].split()
+            info["layers"].append(parts[1])
+            info["shapes"].append(parts[2] + parts[3])
+            info["params"].append(parts[4])
         self.modelInfo.clear()
-        self.modelInfo.append(model_summary)
+        self.modelInfo.append("<b>Model:</b> " + info["model"])
+        self.modelInfo.append("<b>Layer</b> - <b>Output</b> - <b>Params</b>")
+        for idx in range(len(info["layers"])):
+            self.modelInfo.append(f"<b>{info['layers'][idx]}</b> - {info['shapes'][idx]} - {info['params'][idx]}")
 
         self.listWidget.setCurrentRow(0)
         self.listWidget.itemClicked.connect(self.on_sidemenu_clicked)
@@ -212,7 +238,7 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         self.upperPlotFrame.setFixedWidth(_width)
         self.bottomPlotFrame.setFixedWidth(_width)
 
-        self.sideMenuFrame.setFixedWidth(self.width() * 0.08)
+        self.sideMenuFrame.setFixedWidth(self.width() * 0.1)
         self.plot_input_figures()
 
     def plot_input_figures(self):
@@ -249,54 +275,50 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
 
 
     def populate_analyzers(self):
-        ### create IG ###
-        if "IG" in self.project.analyzers:
-            self.project.analyzers["IG"].innvestigate_analyzer = \
+        for name, analyzer in self.project.analyzers.items():
+            self.create_analyzer(name, analyzer)
+
+
+    def create_analyzer(self, name, analyzer):
+        if name.startswith("IG"):
+            analyzer.innvestigate_analyzer = \
                 innvestigate.create_analyzer("integrated_gradients", self.project.model_wo_softmax,\
-                neuron_selection_mode=self.project.analyzers["IG"].activation,\
-                reference_inputs= self.project.analyzers["IG"].reference_input, steps = self.project.analyzers["IG"].steps)
+                neuron_selection_mode=analyzer.activation,\
+                reference_inputs= analyzer.reference_input, steps = analyzer.steps)
             
-            self.project.analyzers["IG"].analyzer_output = self.project.analyzers["IG"].innvestigate_analyzer.analyze(self.project.test_x)
+            analyzer.analyzer_output = analyzer.innvestigate_analyzer.analyze(self.project.test_x)
 
         ### create LRP_Z
-        if "LRP_Z" in self.project.analyzers:
-            self.project.analyzers["LRP_Z"].innvestigate_analyzer = \
-                innvestigate.create_analyzer("lrp.z", self.project.model, disable_model_checks=True,\
-                neuron_selection_mode=self.project.analyzers["LRP_Z"].activation)
-            if self.project.analyzers["LRP_Z"].activation == "index":
-                self.project.analyzers["LRP_Z"].analyzer_output = self.project.analyzers["LRP_Z"].innvestigate_analyzer.analyze(self.project.test_x,\
-                                                                                                    neuron_selection = self.project.analyzers["LRP_Z"].neuron)
+        if name.startswith("LRP_Z"):
+            analyzer.innvestigate_analyzer = innvestigate.create_analyzer("lrp.z", self.project.model, disable_model_checks=True,neuron_selection_mode=analyzer.activation)
+            if analyzer.activation == "index":
+                analyzer.analyzer_output = analyzer.innvestigate_analyzer.analyze(self.project.test_x,neuron_selection = analyzer.neuron)
             else:
-                self.project.analyzers["LRP_Z"].analyzer_output = self.project.analyzers["LRP_Z"].innvestigate_analyzer.analyze(self.project.test_x)
+                analyzer.analyzer_output = analyzer.innvestigate_analyzer.analyze(self.project.test_x)
 
         ### create LRP_EPSILON ###
-        if "LRP_Epsilon" in self.project.analyzers:
-            self.project.analyzers["LRP_Epsilon"].innvestigate_analyzer = \
-                innvestigate.create_analyzer("lrp.epsilon", self.project.model,\
-                disable_model_checks=True, neuron_selection_mode=self.project.analyzers["LRP_Epsilon"].activation,\
-                **{"epsilon": self.project.analyzers["LRP_Epsilon"].epsilon})
-            if self.project.analyzers["LRP_Epsilon"].activation == "index":
-                self.project.analyzers["LRP_Epsilon"].analyzer_output = self.project.analyzers["LRP_Epsilon"].innvestigate_analyzer.analyze(self.project.test_x,\
-                                                                                                                neuron_selection = self.project.analyzers["LRP_Epsilon"].neuron)
+        if name.startswith("LRP_Epsilon"):
+            analyzer.innvestigate_analyzer = innvestigate.create_analyzer("lrp.epsilon", self.project.model,\
+                disable_model_checks=True, neuron_selection_mode=analyzer.activation,\
+                **{"epsilon": analyzer.epsilon})
+            if analyzer.activation == "index":
+                analyzer.analyzer_output = analyzer.innvestigate_analyzer.analyze(self.project.test_x,neuron_selection = analyzer.neuron)
             else:
-                self.project.analyzers["LRP_Epsilon"].analyzer_output = self.project.analyzers["LRP_Epsilon"].innvestigate_analyzer.analyze(self.project.test_x)
+                analyzer.analyzer_output = analyzer.innvestigate_analyzer.analyze(self.project.test_x)
 
         ### create LRP_AB ###
-        if "LRP_AB" in self.project.analyzers:
-            if self.project.analyzers["LRP_AB"].alpha == 1 and self.project.analyzers["LRP_AB"].beta == 0:
-                self.project.analyzers["LRP_AB"].innvestigate_analyzer = \
-                    innvestigate.create_analyzer("lrp.alpha_1_beta_0", self.project.model,\
-                    disable_model_checks=True, neuron_selection_mode=self.project.analyzers["LRP_AB"].activation)
-            if self.project.analyzers["LRP_AB"].alpha == 2 and self.project.analyzers["LRP_AB"].beta == 1:
-                self.project.analyzers["LRP_AB"].innvestigate_analyzer = \
-                    innvestigate.create_analyzer("lrp.alpha_2_beta_1", self.project.model,\
-                    disable_model_checks=True, neuron_selection_mode=self.project.analyzers["LRP_AB"].activation)
+        if name.startswith("LRP_AB"):
+            if analyzer.alpha == 1 and analyzer.beta == 0:
+                analyzer.innvestigate_analyzer = innvestigate.create_analyzer("lrp.alpha_1_beta_0", self.project.model,\
+                    disable_model_checks=True, neuron_selection_mode=analyzer.activation)
+            if analyzer.alpha == 2 and analyzer.beta == 1:
+                analyzer.innvestigate_analyzer = innvestigate.create_analyzer("lrp.alpha_2_beta_1", self.project.model,\
+                    disable_model_checks=True, neuron_selection_mode=analyzer.activation)
 
-            if self.project.analyzers["LRP_AB"].activation == "index":
-                self.project.analyzers["LRP_AB"].analyzer_output = self.project.analyzers["LRP_AB"].innvestigate_analyzer.analyze(self.project.test_x,\
-                                                                                                        neuron_selection = self.project.analyzers["LRP_AB"].neuron)
+            if analyzer.activation == "index":
+                analyzer.analyzer_output = analyzer.innvestigate_analyzer.analyze(self.project.test_x,neuron_selection = analyzer.neuron)
             else:
-                self.project.analyzers["LRP_AB"].analyzer_output = self.project.analyzers["LRP_AB"].innvestigate_analyzer.analyze(self.project.test_x)
+                analyzer.analyzer_output = analyzer.innvestigate_analyzer.analyze(self.project.test_x)
 
 
     def hist_checkbox_state_changed(self):
@@ -518,6 +540,7 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
                 current_plot.setScene(scene)
             else:
                 print(f"{position}Plot_{tab_number} not found")
+        print("ANALYZER: ", analyzer)
         figure = self.project.analyzers[analyzer].ui_elements_config[f"{position}_figures"][tab_number]
         if "distribution" in figure.config["plot_type"] and figure.config["plot_type"]["distribution"]["histogram"]["activated"]:
             fig = figure.plot_relevance_score_distribution(self.project, analyzer, figureSize = current_plot.size())
@@ -546,7 +569,7 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication()
     apply_stylesheet(app)
     qt_app = MainApp()
-    qt_dialog = NewModelDialog(qt_app)
+    qt_dialog = NewModelDialog(qt_app, purpose="project")
     qt_dialog.setWindowFlags(qt_dialog.windowFlags() | Qt.WindowStaysOnTopHint)
     qt_dialog.show()
     #qt_app.show()

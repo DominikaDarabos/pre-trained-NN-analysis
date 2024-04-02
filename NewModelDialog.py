@@ -14,17 +14,20 @@ activations = {
 }
 
 class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
-    def __init__(self, main, parent=None):
+    def __init__(self, main, purpose=None, parent=None):
         super().__init__(parent)
         self.setupUi(self) 
         self.activateWindow()
         self.app = main
         self.project = Project()
+        if purpose == "project":
+            self.add_input_frame()
+            self.selectModelButton.clicked.connect(self.select_model_dialog)
+            self.selectCustomButton.clicked.connect(self.select_custom_dialog)
+            self.selectInputButton.clicked.connect(self.select_input_dialog)
+        self.add_analyzer_frame()
+        self.add_create_button()
         self.createButton.clicked.connect(self.create_project)
-        self.selectModelButton.clicked.connect(self.select_model_dialog)
-        self.selectCustomButton.clicked.connect(self.select_custom_dialog)
-        self.selectInputButton.clicked.connect(self.select_input_dialog)
-
         #TODO:
         self.load_input_file()
 
@@ -37,6 +40,16 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
         self.app.project = self.project
         self.app.load_start_window()
         self.hide()  # Hide the dialog
+    
+    def create_analyzers(self):
+        self.collect_selected_analyzers()
+        for name, analyzer in self.project.analyzers.items():
+            self.app.create_analyzer(name, analyzer)
+            self.app.project.analyzers[name] = analyzer
+        self.app.populate_list_widget()
+        self.app.listWidget.setCurrentRow(len(self.app.project.analyzers)-1)
+        self.app.update_main_tab()
+        self.hide()
     
     def select_model_dialog(self):
         options = QtWidgets.QFileDialog.Options()
@@ -76,35 +89,39 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
             except:
                 step = 64
                 print("step is set")
-            self.project.analyzers["IG"] = Analyzer(reference_input = ref, steps = step)
-            self.project.analyzers["IG"].activation = activations[self.comboBox_IG.currentText()]
+            name = f"IG - {self.comboBox_IG.currentText()} - {ref} - {step}"
+            self.project.analyzers[name] = Analyzer(reference_input = ref, steps = step)
+            self.project.analyzers[name].activation = activations[self.comboBox_IG.currentText()]
         if self.checkBox_LRP_Z.isChecked():
+            name = f"LRP_Z - {self.comboBox_LRP_Z.currentText()}"
             if self.comboBox_LRP_Z.currentText().startswith("Index"):
-                self.project.analyzers["LRP_Z"] = Analyzer(neuron = int(self.comboBox_LRP_Z.currentText().split(" ")[-1]))
-                self.project.analyzers["LRP_Z"].activation = "index"
+                self.project.analyzers[name] = Analyzer(neuron = int(self.comboBox_LRP_Z.currentText().split(" ")[-1]))
+                self.project.analyzers[name].activation = "index"
             else:
-                self.project.analyzers["LRP_Z"] = Analyzer()
-                self.project.analyzers["LRP_Z"].activation = activations[self.comboBox_LRP_Z.currentText()]
+                self.project.analyzers[name] = Analyzer()
+                self.project.analyzers[name].activation = activations[self.comboBox_LRP_Z.currentText()]
         if self.checkBox_LRP_AB.isChecked():
             alphaBetaString = self.AlphaBetaComboBox.currentText()
             numbers_as_strings = re.findall(r'\d+', alphaBetaString)
             numbers_as_integers = [int(num_str) for num_str in numbers_as_strings]
+            name = f"LRP_AB - {self.comboBox_LRP_AB.currentText()} - {numbers_as_integers[0]} - {numbers_as_integers[1]}"
             if self.comboBox_LRP_AB.currentText().startswith("Index"):
-                self.project.analyzers["LRP_AB"] =  Analyzer(alpha = numbers_as_integers[0], beta = numbers_as_integers[1],\
+                self.project.analyzers[name] =  Analyzer(alpha = numbers_as_integers[0], beta = numbers_as_integers[1],\
                                                               neuron = int(self.comboBox_LRP_AB.currentText().split(" ")[-1]))
-                self.project.analyzers["LRP_AB"].activation = "index"
+                self.project.analyzers[name].activation = "index"
             else:
-                self.project.analyzers["LRP_AB"] =  Analyzer(alpha = numbers_as_integers[0], beta = numbers_as_integers[1])
-                self.project.analyzers["LRP_AB"].activation = activations[self.comboBox_LRP_AB.currentText()]
+                self.project.analyzers[name] =  Analyzer(alpha = numbers_as_integers[0], beta = numbers_as_integers[1])
+                self.project.analyzers[name].activation = activations[self.comboBox_LRP_AB.currentText()]
         if self.checkBox_LRP_Epsilon.isChecked():
             try:
                 eps = float(self.EpsilonInput.text())
+                name = f"LRP_Epsilon - {self.comboBox_LRP_Epsilon.currentText()} - {eps}"
                 if self.comboBox_LRP_Epsilon.currentText().startswith("Index"):
-                    self.project.analyzers["LRP_Epsilon"] = Analyzer(epsilon = eps, neuron = int(self.comboBox_LRP_Epsilon.currentText().split(" ")[-1]))
-                    self.project.analyzers["LRP_Epsilon"].activation = "index"
+                    self.project.analyzers[name] = Analyzer(epsilon = eps, neuron = int(self.comboBox_LRP_Epsilon.currentText().split(" ")[-1]))
+                    self.project.analyzers[name].activation = "index"
                 else:
-                    self.project.analyzers["LRP_Epsilon"] = Analyzer(epsilon = eps)
-                    self.project.analyzers["LRP_Epsilon"].activation = activations[self.comboBox_LRP_Epsilon.currentText()]
+                    self.project.analyzers[name] = Analyzer(epsilon = eps)
+                    self.project.analyzers[name].activation = activations[self.comboBox_LRP_Epsilon.currentText()]
             except ValueError:
                 pass
     
