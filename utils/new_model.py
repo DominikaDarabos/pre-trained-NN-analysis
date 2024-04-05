@@ -75,12 +75,14 @@ class Ui_Dialog(object):
 
         self.referenceLine = QLineEdit(self.analyzerCheckboxFrame)
         self.referenceLine.setObjectName(u"referenceLine")
+        self.referenceLine.setToolTip("Baseline for abscence values")
         self.referenceLine.setMaximumWidth(100)
 
         self.horizontalLayout.addWidget(self.referenceLine)
 
         self.stepLine = QLineEdit(self.analyzerCheckboxFrame)
         self.stepLine.setObjectName(u"stepLine")
+        self.stepLine.setToolTip(" Number of steps to use average along integration path.")
         self.stepLine.setMaximumWidth(100)
 
         self.horizontalLayout.addWidget(self.stepLine)

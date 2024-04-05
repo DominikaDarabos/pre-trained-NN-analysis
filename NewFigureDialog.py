@@ -1,9 +1,10 @@
 from PySide6 import QtWidgets
 from utils import create_new_figure
-from PySide6.QtWidgets import  QLabel, QFrame, QVBoxLayout, QGridLayout, QCheckBox, QRadioButton, QLineEdit
+from PySide6.QtWidgets import  QButtonGroup, QLabel, QFrame, QVBoxLayout, QGridLayout, QCheckBox, QRadioButton, QLineEdit
 from PySide6.QtCore import QSize, QCoreApplication
 
 from Figure import Figure_
+from ErrorDialog import ErrorDialog
 
 
 class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
@@ -15,9 +16,10 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
         self.app = main
         self.place = place
         self.plotTypeCombo.currentIndexChanged.connect(self.on_combobox_selection_change)
-        self.createButton.clicked.connect(self.create_figure)
+        self.createButton.clicked.connect(self.check_and_create_figure)
         self.cancelButton.clicked.connect(self.close_window)
         self.load_classes()
+        self.errorLog = []
 
     def on_combobox_selection_change(self):
         selected_option = self.plotTypeCombo.currentText()
@@ -52,12 +54,12 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
             self.classCombo.addItem("")
             self.classCombo.setItemText(num, QCoreApplication.translate("Dialog", str(num), None))
 
-
-
     def close_window(self):
         self.close()
     
-    def create_figure(self):
+    def check_and_create_figure(self):
+        print(self.app.project)
+        self.errorLog = []
         figure = Figure_()
         figure.config["class"] = self.classCombo.currentText()
         figure.config["channels"] = [int(self.classCombo.currentText())]
@@ -76,6 +78,8 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
                 figure.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["activated"] = True
                 figure.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["scatter"] = self.averageAnalyzerScatterRadio.isChecked()
                 figure.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["line"] = self.averageAnalyzerLineRadio.isChecked()
+            if not self.singleSampleCheckbox.isChecked() and not self.averageSampleCheckbox.isChecked() and not self.averageAnalyzerCheckbox.isChecked():
+                self.errorLog.append("At least one channel should be selected for the comparison plot.")
         elif self.plotTypeCombo.currentText() == "Distribution":
             figure.add_default_distribution()
             if self.boxRadio.isChecked():
@@ -83,8 +87,8 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
                 if self.boxEveryN.text().isnumeric():
                     figure.config["plot_type"]["distribution"]["box_plot"]["sample_frequency"] = int(self.boxEveryN.text())
                 else:
-                    figure.config["plot_type"]["distribution"]["box_plot"]["sample_frequency"] = 4
-            if self.histRadio.isChecked():
+                    figure.config["plot_type"]["distribution"]["box_plot"]["sample_frequency"] = 50
+            elif self.histRadio.isChecked():
                 figure.config["plot_type"]["distribution"]["histogram"]["activated"] = True
                 try:
                     figure.config["plot_type"]["distribution"]["histogram"]["num_of_bins"] = int(self.histNumOfBins.text())
@@ -94,16 +98,24 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
                     figure.config["plot_type"]["distribution"]["histogram"]["analyzer_relevance_scores"] = True
                     if self.showAllAnalyzerRadio.isChecked():
                         figure.config["channels"] = range(self.app.project.number_of_classes)
-                if self.inputRadio.isChecked():
+                elif self.inputRadio.isChecked():
                     figure.config["plot_type"]["distribution"]["histogram"]["input"] = True
                     if self.showAllInputRadio.isChecked():
                         figure.config["channels"] = range(self.app.project.number_of_classes)
+                else:
+                    self.errorLog.append("Either analyzer or input should be selected under histogram plot.")
+            else:
+                self.errorLog.append("Either boxplot or histogram plot should be selected for distribution plot.")
         analyzer = self.app.get_current_analyzer()
-        self.app.project.analyzers[analyzer].ui_elements_config[f"{self.place}_figures"].append(figure)
-        self.app.create_new_comparison_figure(self.place, figure)
-        self.accept()
-
-
+        if len(self.errorLog) == 0:
+            self.app.project.analyzers[analyzer].ui_elements_config[f"{self.place}_figures"].append(figure)
+            self.app.create_new_comparison_figure(self.place, figure)
+            self.accept()
+        else:
+            error_dialog = ErrorDialog(self.errorLog)
+            error_dialog.exec_()
+            return
+        
     def setup_widgets_for_comparison(self):
         # Clear the layout if it's not empty
         self.clear_frame(self.baseFrame_2)
@@ -121,12 +133,15 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
         self.channelsTitle.setMaximumSize(QSize(16777215, 30))
         self.gridLayout_3.addWidget(self.channelsTitle, 0, 0, 1, 1)
         self.singleSampleCheckbox = QCheckBox(self.channelsFrame)
+        self.singleSampleCheckbox.setToolTip("One randomized input")
         self.singleSampleCheckbox.setObjectName(u"singleSampleCheckbox")
         self.gridLayout_3.addWidget(self.singleSampleCheckbox, 1, 0, 1, 1)
         self.averageSampleCheckbox = QCheckBox(self.channelsFrame)
+        self.averageSampleCheckbox.setToolTip("All input is averaged into one representative")
         self.averageSampleCheckbox.setObjectName(u"averageSampleCheckbox")
         self.gridLayout_3.addWidget(self.averageSampleCheckbox, 2, 0, 1, 1)
         self.averageAnalyzerCheckbox = QCheckBox(self.channelsFrame)
+        self.averageAnalyzerCheckbox.setToolTip("All analyzer relevance scores is averaged into one representative")
         self.averageAnalyzerCheckbox.setObjectName(u"averageAnalyzerCheckbox")
         self.gridLayout_3.addWidget(self.averageAnalyzerCheckbox, 3, 0, 1, 1)
         self.gridLayout_2.addWidget(self.channelsFrame, 0, 0, 1, 1)
@@ -151,6 +166,7 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
         self.gridLayout_8.addWidget(self.averageSampleScatterRadio, 0, 0, 1, 1)
         self.averageSampleLineRadio = QRadioButton(self.averageSampleFrame)
         self.averageSampleLineRadio.setObjectName(u"averageSampleLineRadio")
+        self.averageSampleLineRadio.setChecked(True)
         self.gridLayout_8.addWidget(self.averageSampleLineRadio, 0, 1, 1, 1)
         self.gridLayout_4.addWidget(self.averageSampleFrame, 2, 0, 1, 1)
         self.singleSampleFrame = QFrame(self.radioFrame)
@@ -166,6 +182,7 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
         self.gridLayout_7.addWidget(self.singleSampleScatterRadio, 0, 0, 1, 1)
         self.singleSampleLineRadio = QRadioButton(self.singleSampleFrame)
         self.singleSampleLineRadio.setObjectName(u"singleSampleLineRadio")
+        self.singleSampleLineRadio.setChecked(True)
         self.gridLayout_7.addWidget(self.singleSampleLineRadio, 0, 1, 1, 1)
         self.gridLayout_4.addWidget(self.singleSampleFrame, 1, 0, 1, 1)
         self.labelFrame = QFrame(self.radioFrame)
@@ -198,6 +215,7 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
         self.gridLayout_10.addWidget(self.averageAnalyzerScatterRadio, 0, 0, 1, 1)
         self.averageAnalyzerLineRadio = QRadioButton(self.averageAnalyzerFrame)
         self.averageAnalyzerLineRadio.setObjectName(u"averageAnalyzerLineRadio")
+        self.averageAnalyzerLineRadio.setChecked(True)
         self.gridLayout_10.addWidget(self.averageAnalyzerLineRadio, 0, 1, 1, 1)
         self.gridLayout_4.addWidget(self.averageAnalyzerFrame, 4, 0, 1, 1)
         self.gridLayout_2.addWidget(self.radioFrame, 0, 1, 1, 1)
@@ -219,6 +237,7 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
         self.averageAnalyzerLineRadio.setText("")
     
     def setup_widgets_for_distribution(self):
+        self.buttonGroup = QButtonGroup(self)
         self.clear_frame(self.baseFrame_2)
     
         self.figureTypeTitle = QLabel(self.baseFrame_2)
@@ -233,8 +252,10 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
         self.gridLayout_6.setObjectName(u"gridLayout_6")
         self.boxRadio = QRadioButton(self.boxFrame)
         self.boxRadio.setObjectName(u"boxRadio")
+        self.buttonGroup.addButton(self.boxRadio)
         self.gridLayout_6.addWidget(self.boxRadio, 0, 0, 1, 1)
         self.boxEveryN = QLineEdit(self.boxFrame)
+        self.boxEveryN.setToolTip("Every which element should be plotted")
         self.boxEveryN.setObjectName(u"boxEveryN")
         self.gridLayout_6.addWidget(self.boxEveryN, 1, 0, 1, 1)
         self.gridLayout_2.addWidget(self.boxFrame, 1, 0, 1, 1)
@@ -280,6 +301,7 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
         self.gridLayout_3.addWidget(self.histDetailesFrame, 2, 0, 1, 1)
         self.histRadio = QRadioButton(self.histFrame)
         self.histRadio.setObjectName(u"histRadio")
+        self.buttonGroup.addButton(self.histRadio)
 
         self.gridLayout_3.addWidget(self.histRadio, 0, 0, 1, 1)
 
@@ -291,10 +313,10 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
         self.gridLayout.addWidget(self.baseFrame_2, 0, 1, 1, 1)
         self.figureTypeTitle.setText(QCoreApplication.translate("Dialog", u"Figure type", None))
         self.boxRadio.setText(QCoreApplication.translate("Dialog", u"Box plot", None))
-        self.boxEveryN.setText(QCoreApplication.translate("Dialog", u"Sample frequency", None))
+        self.boxEveryN.setText(QCoreApplication.translate("Dialog", u"Sample frequency (default 50)", None))
         self.histRadio.setText(QCoreApplication.translate("Dialog", u"Histogram", None))
         self.analyzerRadio.setText(QCoreApplication.translate("Dialog", u"Analyzer relevance scores", None))
         self.showAllAnalyzerRadio.setText(QCoreApplication.translate("Dialog", u"Show all class", None))
         self.inputRadio.setText(QCoreApplication.translate("Dialog", u"Input", None))
         self.showAllInputRadio.setText(QCoreApplication.translate("Dialog", u"Show all class", None))
-        self.histNumOfBins.setText(QCoreApplication.translate("baseLayout", u"Number of bins", None))
+        self.histNumOfBins.setText(QCoreApplication.translate("baseLayout", u"Number of bins (default 30)", None))

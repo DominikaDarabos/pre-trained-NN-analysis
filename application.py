@@ -3,6 +3,7 @@ from PySide6 import QtWidgets, QtCore
 from PySide6.QtWidgets import QMenu, QDialog,QFileDialog, QTextBrowser, QGraphicsScene, QVBoxLayout, QFrame, QGridLayout, QCheckBox, QGraphicsView, QWidget, QTabWidget, QLabel, QListWidget, QHBoxLayout, QPushButton
 from PySide6.QtCore import QSize, QCoreApplication, Qt
 from utils import main
+from ErrorDialog import ErrorDialog
 import sys, os
 import tensorflow as tf
 import numpy as np
@@ -45,6 +46,7 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         self.active_upper_plot = None
         self.active_bottom_plot = None
         self.changedTab = None
+        self.model_info = None
         
     def show_menu(self):
         self.dropdown_menu.exec(self.menuButton.mapToGlobal(self.menuButton.rect().bottomLeft()))
@@ -158,10 +160,34 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         self.menuButton.clicked.connect(self.show_menu)
 
         #self.showMaximized()
-        self.populate_list_widget()
+        self.plot_input_figures()
+        self.add_info_and_error_tab()
         self.populate_analyzers()
+        self.populate_list_widget()
         
+        self.load_info_panel()
+        
+        self.listWidget.setCurrentRow(0)
+        self.listWidget.itemClicked.connect(self.on_sidemenu_clicked)
 
+        self.upperPlotFrame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.bottomPlotFrame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        # set sizes
+        half_height = int(self.height() / 2)
+        _width = int(self.width() * 0.6)
+        
+        self.upperPlotFrame.setFixedHeight(half_height - 20)
+        self.bottomPlotFrame.setFixedHeight(half_height - 20)
+
+        self.upperPlotFrame.setFixedWidth(_width)
+        self.bottomPlotFrame.setFixedWidth(_width)
+
+        self.sideMenuFrame.setFixedWidth(self.width() * 0.1)
+        
+        self.draw_graph()
+    
+    def load_info_panel(self):
         type_of_input = str(type(self.project.test_x)).replace("<class '", "").replace("'>", "")
         type_of_one_input = str(type(self.project.test_x[0,0])).replace("<class '", "").replace("'>", "")
         input_info = f"""
@@ -204,7 +230,7 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         model_summary = model_summary.replace('=','').replace('_','').replace('\t', ' ')
         model_summary = model_summary.split("\n")
         model_summary = [line for line in model_summary if line.strip()]
-        info = {
+        self.model_info = {
             "model" : model_summary[0].split()[1],
             "layers": [],
             "shapes": [],
@@ -213,33 +239,23 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         for line_idx in range(len(model_summary) - 5):
             idx = line_idx + 2
             parts =  model_summary[idx].split()
-            info["layers"].append(parts[1])
-            info["shapes"].append(parts[2] + parts[3])
-            info["params"].append(parts[4])
+            self.model_info["layers"].append(parts[1])
+            self.model_info["shapes"].append(parts[2] + parts[3])
+            self.model_info["params"].append(parts[4])
         self.modelInfo.clear()
-        self.modelInfo.append("<b>Model:</b> " + info["model"])
+        self.modelInfo.append("<b>Model:</b> " + self.model_info["model"])
         self.modelInfo.append("<b>Layer</b> - <b>Output</b> - <b>Params</b>")
-        for idx in range(len(info["layers"])):
-            self.modelInfo.append(f"<b>{info['layers'][idx]}</b> - {info['shapes'][idx]} - {info['params'][idx]}")
+        for idx in range(len(self.model_info["layers"])):
+            self.modelInfo.append(f"<b>{self.model_info['layers'][idx]}</b> - {self.model_info['shapes'][idx]} - {self.model_info['params'][idx]}")
 
-        self.listWidget.setCurrentRow(0)
-        self.listWidget.itemClicked.connect(self.on_sidemenu_clicked)
-
-        self.upperPlotFrame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.bottomPlotFrame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
-        # set sizes
-        half_height = int(self.height() / 2)
-        _width = int(self.width() * 0.6)
-        
-        self.upperPlotFrame.setFixedHeight(half_height - 20)
-        self.bottomPlotFrame.setFixedHeight(half_height - 20)
-
-        self.upperPlotFrame.setFixedWidth(_width)
-        self.bottomPlotFrame.setFixedWidth(_width)
-
-        self.sideMenuFrame.setFixedWidth(self.width() * 0.1)
-        self.plot_input_figures()
+    def add_info_and_error_tab(self):
+        error_tab = QWidget()
+        layout = QVBoxLayout()
+        self.info_and_error_browser = QTextBrowser()
+        self.info_and_error_browser.append("Input files are loaded successfully.")
+        layout.addWidget(self.info_and_error_browser)
+        error_tab.setLayout(layout)
+        self.infoWidget.addTab(error_tab, "Infos \& Errors")
 
     def plot_input_figures(self):
         for class_num in range(self.project.number_of_classes):
@@ -264,61 +280,138 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
 
             self.infoWidget.addTab(tab_widget, f"class_{class_num}_input")
 
+
+    def draw_graph(self):
+        tab_widget = QWidget()
+        tab_layout = QVBoxLayout(tab_widget)
+
+        graphics_view = QGraphicsView()
+        scene = QGraphicsScene()
+        graphics_view.setScene(scene)
+        circles = [int(output.split(",")[1].split(")")[0]) for output in self.model_info["shapes"]]
+        num_columns = len(circles)
+        max_height = max(circles)
+        fig = plt.figure(figsize=(self.width()*0.26/100, self.height()*0.47/100))
+        ax = fig.add_subplot(111)
+        
+        for i in range(num_columns):
+            for j in range(circles[i]):
+                if i < num_columns - 1:  # Only connect circles if there's a next column
+                    for k in range(circles[i+1]):
+                        ax.plot([i, i+1], [j, k], color='indianred', zorder=1)  # Connect circles between columns
+
+        for i in range(num_columns):  # Plot circles after lines to ensure they are on top
+            for j in range(circles[i]):
+                ax.scatter(i, j, color='darkred', s=600, zorder=2)  # Scatter plot circles
+                if j == 0:  # Add text inside circle only for the first circle in each column
+                    ax.text(i, j, str(self.model_info["params"][i]), ha='center', va='center', color='white', zorder=3)
+
+        for i, texts in enumerate(self.model_info["layers"]):
+            ax.text(i, -0.5, texts, ha='center', va='top', color='black', fontsize="small")  # Write column text under the graph
+            if i == 0:  # Add "number of params" text before the first circle in the first column
+                ax.text(i-0.8, 0, "Num\nof\nParams", ha='center', va='center', color='black', fontsize="small")
+
+        ax.set_xlim(-0.5, num_columns-0.5)  # Set x-axis limits
+        ax.set_ylim(-1, max_height-0.5)  # Set y-axis limits to include the additional text
+        ax.axis('off')  # Turn off axis
+        ax.set_title('Model Graph')  # Set title
+        canvas = FigureCanvas(fig)
+        scene.addWidget(canvas)
+        tab_layout.addWidget(graphics_view)
+
+        self.infoWidget.addTab(tab_widget, "Model")
+
+
     def show_create_figure_dialog(self):
         sender_button = self.sender()
-        if sender_button == self.upper_new_plot_button:
-            qt_dialog = NewFigureDialog(self, place = "upper")
-            qt_dialog.exec_()
-        elif sender_button == self.bottom_new_plot_button:
-            qt_dialog = NewFigureDialog(self, place = "bottom")
-            qt_dialog.exec_()
+        if self.listWidget.count() == 0:
+            error_dialog = ErrorDialog(["<font color='red'>There is no successfully ran analyzer.</font>"])
+            error_dialog.exec_()
+            return
+        else:
+            if sender_button == self.upper_new_plot_button:
+                qt_dialog = NewFigureDialog(self, place = "upper")
+                qt_dialog.exec_()
+            elif sender_button == self.bottom_new_plot_button:
+                qt_dialog = NewFigureDialog(self, place = "bottom")
+                qt_dialog.exec_()
 
 
     def populate_analyzers(self):
+        keys_to_delete = []
         for name, analyzer in self.project.analyzers.items():
-            self.create_analyzer(name, analyzer)
+            if not self.create_analyzer(name, analyzer):
+                keys_to_delete.append(name)
+        for key in keys_to_delete:
+            del self.project.analyzers[key]
+        if self.listWidget.count() == 0:
+            self.info_and_error_browser.append("<font color='red'>- ERROR: There is no successfully ran analyzer.</font>")
 
 
     def create_analyzer(self, name, analyzer):
         if name.startswith("IG"):
-            analyzer.innvestigate_analyzer = \
-                innvestigate.create_analyzer("integrated_gradients", self.project.model_wo_softmax,\
-                neuron_selection_mode=analyzer.activation,\
-                reference_inputs= analyzer.reference_input, steps = analyzer.steps)
-            
-            analyzer.analyzer_output = analyzer.innvestigate_analyzer.analyze(self.project.test_x)
+            try:
+                analyzer.innvestigate_analyzer = \
+                    innvestigate.create_analyzer("integrated_gradients", self.project.model_wo_softmax,\
+                    neuron_selection_mode=analyzer.activation,\
+                    reference_inputs= analyzer.reference_input, steps = "analyzer.steps")
+                
+                analyzer.analyzer_output = analyzer.innvestigate_analyzer.analyze(self.project.test_x)
+                self.info_and_error_browser.append("IG analyzer is successfully loaded.")
+                return True
+            except Exception as e:
+                self.info_and_error_browser.append(f"<font color='red'>- ERROR in creating IG analyzer: {e} \n- IG analyzer is deleted from the project.</font>")
+                return False
 
         ### create LRP_Z
         if name.startswith("LRP_Z"):
-            analyzer.innvestigate_analyzer = innvestigate.create_analyzer("lrp.z", self.project.model, disable_model_checks=True,neuron_selection_mode=analyzer.activation)
-            if analyzer.activation == "index":
-                analyzer.analyzer_output = analyzer.innvestigate_analyzer.analyze(self.project.test_x,neuron_selection = analyzer.neuron)
-            else:
-                analyzer.analyzer_output = analyzer.innvestigate_analyzer.analyze(self.project.test_x)
+            try:
+                analyzer.innvestigate_analyzer = innvestigate.create_analyzer("lrp.z", self.project.model, disable_model_checks=True,neuron_selection_mode=analyzer.activation)
+                if analyzer.activation == "index":
+                    analyzer.analyzer_output = analyzer.innvestigate_analyzer.analyze(self.project.test_x,neuron_selection = analyzer.neuron)
+                else:
+                    analyzer.analyzer_output = analyzer.innvestigate_analyzer.analyze(self.project.test_x)
+                self.info_and_error_browser.append("LRP_Z analyzer is successfully loaded.")
+                return True
+            except Exception as e:
+                self.info_and_error_browser.append(f"<font color='red'>- ERROR in creating LRP-Z analyzer: {e}\n- LRP-Z analyzer is deleted from the project.</font>")
+                return False
 
         ### create LRP_EPSILON ###
         if name.startswith("LRP_Epsilon"):
-            analyzer.innvestigate_analyzer = innvestigate.create_analyzer("lrp.epsilon", self.project.model,\
-                disable_model_checks=True, neuron_selection_mode=analyzer.activation,\
-                **{"epsilon": analyzer.epsilon})
-            if analyzer.activation == "index":
-                analyzer.analyzer_output = analyzer.innvestigate_analyzer.analyze(self.project.test_x,neuron_selection = analyzer.neuron)
-            else:
-                analyzer.analyzer_output = analyzer.innvestigate_analyzer.analyze(self.project.test_x)
+            try:
+                analyzer.innvestigate_analyzer = innvestigate.create_analyzer("lrp.epsilon", self.project.model,\
+                    disable_model_checks=True, neuron_selection_mode=analyzer.activation,\
+                    **{"epsilon": analyzer.epsilon})
+                if analyzer.activation == "index":
+                    analyzer.analyzer_output = analyzer.innvestigate_analyzer.analyze(self.project.test_x,neuron_selection = analyzer.neuron)
+                else:
+                    analyzer.analyzer_output = analyzer.innvestigate_analyzer.analyze(self.project.test_x)
+                self.info_and_error_browser.append("LRP_Epsilon analyzer is successfully loaded.")
+                return True
+            except Exception as e:
+                self.info_and_error_browser.append(f"<font color='red'>- ERROR in creating LRP-Epsilon analyzer: {e}\n- LRP-Epsilon analyzer is deleted from the project.</font>")
+                return False
 
         ### create LRP_AB ###
         if name.startswith("LRP_AB"):
-            if analyzer.alpha == 1 and analyzer.beta == 0:
-                analyzer.innvestigate_analyzer = innvestigate.create_analyzer("lrp.alpha_1_beta_0", self.project.model,\
-                    disable_model_checks=True, neuron_selection_mode=analyzer.activation)
-            if analyzer.alpha == 2 and analyzer.beta == 1:
-                analyzer.innvestigate_analyzer = innvestigate.create_analyzer("lrp.alpha_2_beta_1", self.project.model,\
-                    disable_model_checks=True, neuron_selection_mode=analyzer.activation)
+            try:
+                if analyzer.alpha == 1 and analyzer.beta == 0:
+                    analyzer.innvestigate_analyzer = innvestigate.create_analyzer("lrp.alpha_1_beta_0", self.project.model,\
+                        disable_model_checks=True, neuron_selection_mode=analyzer.activation)
+                elif analyzer.alpha == 2 and analyzer.beta == 1:
+                    analyzer.innvestigate_analyzer = innvestigate.create_analyzer("lrp.alpha_2_beta_1", self.project.model,\
+                        disable_model_checks=True, neuron_selection_mode=analyzer.activation)
 
-            if analyzer.activation == "index":
-                analyzer.analyzer_output = analyzer.innvestigate_analyzer.analyze(self.project.test_x,neuron_selection = analyzer.neuron)
-            else:
-                analyzer.analyzer_output = analyzer.innvestigate_analyzer.analyze(self.project.test_x)
+                if analyzer.activation == "index":
+                    analyzer.analyzer_output = analyzer.innvestigate_analyzer.analyze(self.project.test_x,neuron_selection = analyzer.neuron)
+                else:
+                    analyzer.analyzer_output = analyzer.innvestigate_analyzer.analyze(self.project.test_x)
+                self.info_and_error_browser.append("LRP_AB analyzer is successfully loaded.")
+                return True
+            except Exception as e:
+                self.info_and_error_browser.append(f"<font color='red'>- ERROR in creating LRP-AB analyzer: {e}\n- LRP-AB analyzer is deleted from the project.</font>")
+                return False
 
 
     def hist_checkbox_state_changed(self):
@@ -337,8 +430,6 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         checked_checkboxes = [checkbox for checkbox in hist_checkboxes if checkbox.isChecked()]
         classes = [int(checkbox.objectName().split("_")[-1]) for checkbox in checked_checkboxes]
         figure.config["channels"] = classes
-        print("AFTER CHANGE: ", figure.config)
-        print("POSITION, TAB_NUMBER: ", position, tab_number)
         self.load_plot(position, tab_number)
 
 
@@ -350,7 +441,6 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
             position = "bottom"
             tab_number = self.active_bottom_plot
         analyzer = self.get_current_analyzer()
-        print(position, tab_number)
         figure = self.project.analyzers[analyzer].ui_elements_config[f"{position}_figures"][tab_number]
         comp_checkboxes = self.project.analyzers[analyzer].ui_elements_config[f"{position}_checkboxes"][tab_number]
         if comp_checkboxes[0].isChecked():
@@ -360,6 +450,7 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
                 figure.config["plot_type"]["comparison"]["channels"]["single_sample"]["line"] = True
         else:
             figure.config["plot_type"]["comparison"]["channels"]["single_sample"]["activated"] = False
+            figure.config["plot_type"]["comparison"]["random_count"] = None
         if comp_checkboxes[1].isChecked():
             if not figure.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["activated"]:
                 figure.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["activated"] = True
@@ -375,6 +466,7 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         else:
             figure.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["activated"] = False
         self.load_plot(position, tab_number)
+        print("RANDOM: ",figure.config["plot_type"]["comparison"]["rancom_count"])
 
     def print_figure_attributes(self):
         analyzer = self.get_current_analyzer()
@@ -395,26 +487,23 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
             activation_type = f"neurons with influence on class {self.project.analyzers[analyzer].neuron}"
         if "comparison" in fig.config["plot_type"]:
             info_content = f"""
-            Input and analyzer score signals<br/>
+            <b>plot_type:</b> comparison <br/>
             <b>class:</b> {fig.config["class"]}<br/>
             <b>prediction quality:</b> {fig.config["prediction_quality"]}<br/>
-            <b>plot_type:</b> comparison
             <b>activation:</b> {self.project.analyzers[analyzer].activation} - {activation_type}
             """
         elif "distribution" in fig.config["plot_type"] and fig.config["plot_type"]["distribution"]["box_plot"]["activated"]:
             info_content = f"""
-            Box plot of analyzer scores<br/>
+            <b>plot_type:</b> distribution<br/>
             <b>class:</b> {fig.config["class"]}<br/>
             <b>prediction quality:</b> {fig.config["prediction_quality"]}<br/>
-            <b>plot_type:</b> distribution
             <b>activation:</b> {self.project.analyzers[analyzer].activation} - {activation_type}
             """
         elif "distribution" in fig.config["plot_type"] and fig.config["plot_type"]["distribution"]["histogram"]["activated"]:
             info_content = f"""
-            Histogram plot of analyzer scores<br/>
+            <b>plot_type:</b> distribution<br/>
             <b>class:</b> {fig.config["class"]}<br/>
             <b>prediction quality:</b> {fig.config["prediction_quality"]}<br/>
-            <b>plot_type:</b> distribution
             <b>activation:</b> {self.project.analyzers[analyzer].activation} - {activation_type}
             """
         figureAttributes.setHtml(info_content)
@@ -540,7 +629,6 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
                 current_plot.setScene(scene)
             else:
                 print(f"{position}Plot_{tab_number} not found")
-        print("ANALYZER: ", analyzer)
         figure = self.project.analyzers[analyzer].ui_elements_config[f"{position}_figures"][tab_number]
         if "distribution" in figure.config["plot_type"] and figure.config["plot_type"]["distribution"]["histogram"]["activated"]:
             fig = figure.plot_relevance_score_distribution(self.project, analyzer, figureSize = current_plot.size())
@@ -548,17 +636,6 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
             fig = figure.plot_grouped_boxplot(self.project, analyzer, figureSize = current_plot.size())
         elif "comparison" in figure.config["plot_type"]:
             fig = figure.plot_comparison(self.project, analyzer, figureSize = current_plot.size())
-        else:
-            fig = plt.figure()
-            axes = fig.gca()
-
-            x = np.linspace(1, 10)
-            y = np.linspace(1, 10)
-            y1 = np.linspace(11, 20)
-            axes.plot(x, y, "-k", label="first one")
-            axes.plot(x, y1, "-b", label="second one")
-            axes.legend()
-            axes.grid(True)
         figure.config["fig"] = fig
         canvas = FigureCanvas(fig)
         scene.addWidget(canvas)
@@ -570,7 +647,7 @@ if __name__ == '__main__':
     apply_stylesheet(app)
     qt_app = MainApp()
     qt_dialog = NewModelDialog(qt_app, purpose="project")
-    qt_dialog.setWindowFlags(qt_dialog.windowFlags() | Qt.WindowStaysOnTopHint)
+    #qt_dialog.setWindowFlags(qt_dialog.windowFlags() | Qt.WindowStaysOnTopHint)
     qt_dialog.show()
     #qt_app.show()
     app.exec_()

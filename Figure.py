@@ -19,6 +19,7 @@ class Figure_():
     
     def add_default_comparison(self):
         self.config["plot_type"]["comparison"] = {
+                    "random_count": None,
                     "channels":{
                         "single_sample":{
                             "activated": False,
@@ -87,18 +88,15 @@ class Figure_():
         num_steps = len(self.config["channels"])
 
         # Create a list of colors transitioning between color1 and color2
-        colors = [color1, (1,1,1),color2]
+        colors = [color1, (1,1,1), color2]
 
         # Create the custom colormap
         custom_cmap = LinearSegmentedColormap.from_list("custom_colormap", colors, N=num_steps)
         
     # Create the histogram plot
         for class_num in self.config["channels"]:
-            if self.config["prediction_quality"] == "ground_truth":
+            if self.config["prediction_quality"] == "correct":
                 class_indices = project.get_truth_class_indices(class_num)
-            elif self.config["prediction_quality"] == "correct":
-                #TODO: will be the same for all class
-                class_indices = project.get_correct_pred_indices_for_class(class_num)
             elif self.config["prediction_quality"] == "incorrect":
                 class_indices = project.get_incorrect_prediction_indices_for_class(class_num)
             elif self.config["prediction_quality"] == "false_negative":
@@ -175,25 +173,19 @@ class Figure_():
         ax.set_xticks(nearest_indices, ticks)
         fig.tight_layout()
         ax.grid(True, which='major', axis='x')
-        #plt.savefig(f"{Path.cwd()}\..\plots\latest\ecg\\box_plot_distribution\{title}_class_{classes[class_num]}.png")
         return fig
 
     def upsample(self, data, factor):
-    # Determine the number of new points to be inserted between each original point
         new_points = factor - 1
-
-        # Initialize an empty list to store the new interpolated data
         interpolated_data = []
 
         for i in range(len(data) - 1):
-            interpolated_data.append(data[i])  # Include the original point
-
-            # Calculate the values to be interpolated between the current and next point
+            interpolated_data.append(data[i])
             for n in range(1, new_points + 1):
                 interpolated_value = data[i] + (data[i + 1] - data[i]) * n / factor
                 interpolated_data.append(interpolated_value)
 
-        interpolated_data.append(data[-1])  # Include the last original point
+        interpolated_data.append(data[-1])
 
         return interpolated_data
 
@@ -228,8 +220,9 @@ class Figure_():
             input_class_mean = np.mean(input_for_class, axis=0, keepdims=True)
             title = f"False positively classified values - for class {class_num}"
 
-        random_indices_to_plot = random.sample(range(input_for_class.shape[0]), 1)
-        random_index = random_indices_to_plot[0]
+        if self.config["plot_type"]["comparison"]["random_count"] is None:
+            random_indices_to_plot = random.sample(range(input_for_class.shape[0]), 1)
+            self.config["plot_type"]["comparison"]["random_count"] = random_indices_to_plot[0]
 
         color1 = (0 / 255, 139 / 255, 139 / 255)
         color2 = (139 / 255, 0 / 255, 0 / 255)
@@ -237,7 +230,7 @@ class Figure_():
         num_steps = 256
 
         # Create a list of colors transitioning between color1 and color2
-        colors = [color1, (1,1,1),color2]
+        colors = [color1, (0.82745, 0.82745, 0.82745) ,color2]
 
         # Create the custom colormap
         custom_cmap = LinearSegmentedColormap.from_list("custom_colormap", colors, N=num_steps)
@@ -260,17 +253,16 @@ class Figure_():
                 ax.plot(y, color="dimgray", linewidth = 1, label="Analyzer mean")
         if self.config["plot_type"]["comparison"]["channels"]["single_sample"]["activated"]:
             # single input data
-            color_base = self.upsample(self.normalize(analyzer_for_class[random_index,:], -1, 1),5)
-            y = self.upsample(self.normalize(input_for_class[random_index,:], -1, 1), 5)
+            color_base = self.upsample(self.normalize(analyzer_for_class[self.config["plot_type"]["comparison"]["random_count"],:], -1, 1),5)
+            y = self.upsample(self.normalize(input_for_class[self.config["plot_type"]["comparison"]["random_count"],:], -1, 1), 5)
             x = range(len(y))
             if self.config["plot_type"]["comparison"]["channels"]["single_sample"]["scatter"]:
-                #ax.scatter(range(len(input_for_class[random_index,:])), self.normalize(input_for_class[random_index,:], -1, 1), color="r", label="Input input", s=2)
                 cmap = plt.get_cmap(custom_cmap)
                 norm = plt.Normalize(-1, 1)
                 line_colors = cmap(norm(color_base))
                 ax.scatter(x, y, color=line_colors, label="Single input", s=3)
                 sm = ScalarMappable(cmap=cmap, norm=norm)
-                sm.set_array([])  # Set an empty array or list
+                sm.set_array([])
                 cbar = fig.colorbar(sm, ax=ax)
                 cbar.set_label('Analyzer value')
             elif self.config["plot_type"]["comparison"]["channels"]["single_sample"]["line"]:
@@ -281,7 +273,6 @@ class Figure_():
                 lc.set_array(color_base)
                 lc.set_linewidth(3)
                 line = ax.add_collection(lc)
-                #ax.plot(x, color_base)
                 sm = ScalarMappable(cmap=custom_cmap, norm=norm)
                 sm.set_array([])
                 cbar = fig.colorbar(sm, ax=ax)

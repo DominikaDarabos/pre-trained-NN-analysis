@@ -63,7 +63,6 @@ class Ui_Dialog(object):
         self.predQualCombo.addItem("")
         self.predQualCombo.addItem("")
         self.predQualCombo.addItem("")
-        self.predQualCombo.addItem("")
         self.predQualCombo.setObjectName(u"predQualCombo")
         self.predQualLayout.addWidget(self.predQualCombo)
         self.verticalLayout.addLayout(self.predQualLayout)
@@ -112,10 +111,9 @@ class Ui_Dialog(object):
 
         self.predQualTitle.setText(QCoreApplication.translate("Dialog", u"Prediction quality", None))
         self.predQualCombo.setItemText(0, QCoreApplication.translate("Dialog", u"Correct", None))
-        self.predQualCombo.setItemText(1, QCoreApplication.translate("Dialog", u"Ground truth", None))
-        self.predQualCombo.setItemText(2, QCoreApplication.translate("Dialog", u"Incorrect", None))
-        self.predQualCombo.setItemText(3, QCoreApplication.translate("Dialog", u"False positive", None))
-        self.predQualCombo.setItemText(4, QCoreApplication.translate("Dialog", u"False negative", None))
+        self.predQualCombo.setItemText(1, QCoreApplication.translate("Dialog", u"Incorrect", None))
+        self.predQualCombo.setItemText(2, QCoreApplication.translate("Dialog", u"False positive", None))
+        self.predQualCombo.setItemText(3, QCoreApplication.translate("Dialog", u"False negative", None))
 
         self.plotTypeTitle.setText(QCoreApplication.translate("Dialog", u"Plot type", None))
         self.plotTypeCombo.setItemText(0, QCoreApplication.translate("Dialog", u"Comparison", None))

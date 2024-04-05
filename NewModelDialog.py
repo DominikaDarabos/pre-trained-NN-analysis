@@ -7,6 +7,7 @@ import h5py
 import importlib.util
 import innvestigate
 import tensorflow as tf
+from ErrorDialog import ErrorDialog
 
 activations = {
     "None": "all",
@@ -28,24 +29,37 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
         self.add_analyzer_frame()
         self.add_create_button()
         self.createButton.clicked.connect(self.create_project)
+        self.errorLog = []
         #TODO:
-        self.load_input_file()
+        if hasattr(self, 'selectModelLine'):
+            self.selectModelLine.setText("C:/Users/dominika/vpnet/trained_models/ecg_train_test_full_model.h5")
+            self.selectCustomLine.setText("C:/Users/dominika/vpnet/tensorflow/VPLayer.py")
+            self.selectInputLine.setText("C:/Users/dominika/vpnet/tensorflow/ecg_test_data.h5")
+            self.load_input_file()
 
-    # Slot to show the main window
     def create_project(self):
-        #self.main_window.showMaximized()  # Show the main window
-        #self.app.set_shadow_effect(enabled=False)
+        self.errorLog = []
+        self.check_input_files()
         self.collect_selected_analyzers()
         self.load_model_files()
+        if len(self.errorLog) > 0:
+            error_dialog = ErrorDialog(self.errorLog)
+            error_dialog.exec_()
+            return
         self.app.project = self.project
         self.app.load_start_window()
-        self.hide()  # Hide the dialog
+        self.hide()
     
     def create_analyzers(self):
+        self.errorLog = []
         self.collect_selected_analyzers()
+        if len(self.errorLog) > 0:
+            error_dialog = ErrorDialog(self.errorLog)
+            error_dialog.exec_()
+            return
         for name, analyzer in self.project.analyzers.items():
-            self.app.create_analyzer(name, analyzer)
-            self.app.project.analyzers[name] = analyzer
+            if self.app.create_analyzer(name, analyzer):
+                self.app.project.analyzers[name] = analyzer
         self.app.populate_list_widget()
         self.app.listWidget.setCurrentRow(len(self.app.project.analyzers)-1)
         self.app.update_main_tab()
@@ -77,21 +91,17 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
             self.load_input_file()
 
     def collect_selected_analyzers(self):
+        self.project.analyzers = {}
         # Get checked state of checkboxes
         if self.checkBox_IG.isChecked():
             try:
                 ref = int(self.referenceLine.text())
-            except:
-                ref = 0
-                print("ref is set")
-            try:
                 step = int(self.stepLine.text())
+                name = f"IG - {self.comboBox_IG.currentText()} - {ref} - {step}"
+                self.project.analyzers[name] = Analyzer(reference_input = ref, steps = step)
+                self.project.analyzers[name].activation = activations[self.comboBox_IG.currentText()]
             except:
-                step = 64
-                print("step is set")
-            name = f"IG - {self.comboBox_IG.currentText()} - {ref} - {step}"
-            self.project.analyzers[name] = Analyzer(reference_input = ref, steps = step)
-            self.project.analyzers[name].activation = activations[self.comboBox_IG.currentText()]
+                self.errorLog.append("<font color='red'>Integrated gradient's reference and step value have to be numbers.</font>")
         if self.checkBox_LRP_Z.isChecked():
             name = f"LRP_Z - {self.comboBox_LRP_Z.currentText()}"
             if self.comboBox_LRP_Z.currentText().startswith("Index"):
@@ -122,35 +132,41 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
                 else:
                     self.project.analyzers[name] = Analyzer(epsilon = eps)
                     self.project.analyzers[name].activation = activations[self.comboBox_LRP_Epsilon.currentText()]
-            except ValueError:
-                pass
+            except:
+                self.errorLog.append("<font color='red'>Epsilon value must be a number.</font>")  
     
     def load_model_files(self):
         if os.path.isfile(self.project.custom_object_file_path):
-            file_path = self.project.custom_object_file_path
-            splitted_path = file_path.split("/")
-            class_name = splitted_path[-1].split(".")[0]
+            try:
+                file_path = self.project.custom_object_file_path
+                splitted_path = file_path.split("/")
+                class_name = splitted_path[-1].split(".")[0]
 
-            module_dir = "/".join(splitted_path[:-1])
-            sys.path.append(module_dir)
+                module_dir = "/".join(splitted_path[:-1])
+                sys.path.append(module_dir)
 
-            module_name = class_name
-            spec = importlib.util.spec_from_file_location(module_name, file_path)
-            my_module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(my_module)
+                module_name = class_name
+                spec = importlib.util.spec_from_file_location(module_name, file_path)
+                my_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(my_module)
 
-            my_class = getattr(my_module, class_name)
-            custom_objects = {} 
-            custom_objects[class_name] = my_class
+                my_class = getattr(my_module, class_name)
+                custom_objects = {} 
+                custom_objects[class_name] = my_class
 
-            print("Successfully loaded custom object file")
+            except Exception as err:
+                self.errorLog.append(f"<font color='red'>Error during loading custom file: {err}</font>")
         if os.path.isfile(self.project.model_file_path):
-            self.project.model = tf.keras.models.load_model(self.project.model_file_path, custom_objects=custom_objects)
-            self.project.model_wo_softmax = innvestigate.model_wo_softmax(self.project.model)
-            print("Successfully loaded model file")
+            try:
+                self.project.model = tf.keras.models.load_model(self.project.model_file_path, custom_objects=custom_objects)
+                self.project.model_wo_softmax = innvestigate.model_wo_softmax(self.project.model)
+            except Exception as err:
+                self.errorLog.append(f"<font color='red'>Error during loading model file: {err}</font>")
 
         if self.project.test_x is not None:
             self.project.predictions = self.project.model.predict(self.project.test_x, verbose = 2)
+        else:
+            self.errorLog.append("<font color='red'>Input file is not loaded.</font>")
     
     def load_input_file(self):
         if os.path.isfile(self.project.input_file_path):
@@ -159,11 +175,44 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
                     self.project.test_x = hf['test_x'][:]
                     self.project.test_y = hf['test_y'][:]
                     self.project.number_of_classes = self.project.test_y.shape[1]
-            except:
-                self.selectInputLine.setText(f"Error in loading {self.project.input_file_path}.")
+            except Exception as err:
+                self.selectInputLine.setText(f"<font color='red'>Error in loading {self.project.input_file_path} : {err}.</font>")
+                return
             for possible_class_num in range(self.project.test_y.shape[1]):
                 self.comboBox_LRP_Z.addItem(f"Index {possible_class_num}")
                 self.comboBox_LRP_AB.addItem(f"Index {possible_class_num}")
                 self.comboBox_LRP_Epsilon.addItem(f"Index {possible_class_num}")
+
+    def check_input_files(self):
+        if self.selectModelLine.text() == "Select model":
+            self.errorLog.append("<font color='red'>Model file is not selected.</font>")
+        elif not os.path.isfile(self.selectModelLine.text()):
+            self.errorLog.append("<font color='red'>Model file does not exits.</font>")
+        elif self.project.model_file_path == None and os.path.isfile(self.selectModelLine.text()):
+            self.project.model_file_path = self.selectModelLine.text()
+        elif not os.path.isfile(self.project.model_file_path) and os.path.isfile(self.selectModelLine.text()):
+            self.project.model_file_path = self.selectModelLine.text()
+        
+        if self.selectCustomLine.text() == "Select model":
+            self.errorLog.append("<font color='red'>Select custom object python file</font>")
+        elif not os.path.isfile(self.selectCustomLine.text()):
+            self.errorLog.append("<font color='red'>Custom class file does not exits.</font>")
+        elif self.project.custom_object_file_path == None and os.path.isfile(self.selectCustomLine.text()):
+            self.project.custom_object_file_path = self.selectCustomLine.text()
+        elif not os.path.isfile(self.project.custom_object_file_path) and os.path.isfile(self.selectCustomLine.text()):
+            self.project.custom_object_file_path = self.selectCustomLine.text()
+        
+        if self.selectInputLine.text() == "Select input file":
+            self.errorLog.append("<font color='red'>Input file is not selected.</font>")
+        elif not os.path.isfile(self.selectInputLine.text()):
+            self.errorLog.append("<font color='red'>Input file does not exits.</font>")
+        elif self.project.input_file_path == None and os.path.isfile(self.selectInputLine.text()):
+            self.project.input_file_path = self.selectInputLine.text()
+        elif not os.path.isfile(self.project.input_file_path) and os.path.isfile(self.selectInputLine.text()):
+            self.project.input_file_path = self.selectInputLine.text()
+        if self.selectInputLine.text().startswith("Error in loading"):
+            self.errorLog.append("<font color='red'>Error in loading input file</font>")
+
+            
 
             
