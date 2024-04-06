@@ -16,10 +16,19 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
         self.app = main
         self.place = place
         self.plotTypeCombo.currentIndexChanged.connect(self.on_combobox_selection_change)
-        self.createButton.clicked.connect(self.check_and_create_figure)
+        self.createButton.clicked.connect(self.check_form)
         self.cancelButton.clicked.connect(self.close_window)
         self.load_classes()
         self.errorLog = []
+    
+    def check_form(self):
+        self.create_figure()
+        if len(self.errorLog) == 0:
+            self.accept()
+        else:
+            error_dialog = ErrorDialog(self.errorLog)
+            error_dialog.exec_()
+            return
 
     def on_combobox_selection_change(self):
         selected_option = self.plotTypeCombo.currentText()
@@ -28,14 +37,6 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
             self.setup_widgets_for_comparison()
         elif selected_option == "Distribution":
             self.setup_widgets_for_distribution()
-    
-    def clear_layout(self, layout):
-        while layout.count():
-            child = layout.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
-            if child.layout():
-                self.clear_layout(child.layout())
     
     def clear_frame(self, frame):
         layout = frame.layout()
@@ -57,8 +58,7 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
     def close_window(self):
         self.close()
     
-    def check_and_create_figure(self):
-        print(self.app.project)
+    def create_figure(self):
         self.errorLog = []
         figure = Figure_()
         figure.config["class"] = self.classCombo.currentText()
@@ -106,14 +106,11 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
                     self.errorLog.append("Either analyzer or input should be selected under histogram plot.")
             else:
                 self.errorLog.append("Either boxplot or histogram plot should be selected for distribution plot.")
-        analyzer = self.app.get_current_analyzer()
         if len(self.errorLog) == 0:
+            analyzer = self.app.get_current_analyzer()
             self.app.project.analyzers[analyzer].ui_elements_config[f"{self.place}_figures"].append(figure)
             self.app.create_new_comparison_figure(self.place, figure)
-            self.accept()
         else:
-            error_dialog = ErrorDialog(self.errorLog)
-            error_dialog.exec_()
             return
         
     def setup_widgets_for_comparison(self):
@@ -255,7 +252,7 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
         self.buttonGroup.addButton(self.boxRadio)
         self.gridLayout_6.addWidget(self.boxRadio, 0, 0, 1, 1)
         self.boxEveryN = QLineEdit(self.boxFrame)
-        self.boxEveryN.setToolTip("Every which element should be plotted")
+        self.boxEveryN.setToolTip("Every which element should be plotted.")
         self.boxEveryN.setObjectName(u"boxEveryN")
         self.gridLayout_6.addWidget(self.boxEveryN, 1, 0, 1, 1)
         self.gridLayout_2.addWidget(self.boxFrame, 1, 0, 1, 1)
