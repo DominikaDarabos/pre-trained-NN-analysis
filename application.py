@@ -215,8 +215,8 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
             <b>-incorrect: </b> {len(self.project.get_incorrect_prediction_indices())}<br/>
             """
         for class_num in range(self.project.number_of_classes):
-            false_negative_count = len(self.project.get_false_negative_indices(class_num))
-            false_positive_count = len(self.project.get_false_positive_indices(class_num))
+            false_negative_count = len(self.project.get_false_negative_indices_for_class(class_num))
+            false_positive_count = len(self.project.get_false_positive_indices_for_class(class_num))
             validation_info += f"""
             <b>-class_{class_num} false negative: </b> {false_negative_count}<br/>
             <b>-class_{class_num} false positive: </b> {false_positive_count}<br/>

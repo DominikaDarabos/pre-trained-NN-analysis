@@ -100,9 +100,9 @@ class Figure_():
             elif self.config["prediction_quality"] == "incorrect":
                 class_indices = project.get_incorrect_prediction_indices_for_class(class_num)
             elif self.config["prediction_quality"] == "false_negative":
-                class_indices = project.get_false_negative_indices(class_num)
+                class_indices = project.get_false_negative_indices_for_class(class_num)
             elif self.config["prediction_quality"] == "false_positive":
-                class_indices = project.get_false_positive_indices(class_num)
+                class_indices = project.get_false_positive_indices_for_class(class_num)
             else:
                 class_indices = []
 
@@ -138,8 +138,8 @@ class Figure_():
         ax = fig.add_subplot(111)
         correct_pos_indices = project.get_correct_pos_prediction_indices_for_class(class_num)
         correct_neg_indices = project.get_correct_neg_prediction_indices_for_class(class_num)
-        false_neg_indices_for_class = project.get_false_negative_indices(class_num)
-        false_pos_indices_for_class = project.get_false_positive_indices(class_num)
+        false_neg_indices_for_class = project.get_false_negative_indices_for_class(class_num)
+        false_pos_indices_for_class = project.get_false_positive_indices_for_class(class_num)
 
         sorted_false_neg_indices = np.where(np.isin(sorted_indices, false_neg_indices_for_class))[0]
         sorted_false_pos_indices = np.where(np.isin(sorted_indices, false_pos_indices_for_class))[0]
@@ -206,14 +206,14 @@ class Figure_():
             input_class_mean = np.mean(input_for_class, axis=0, keepdims=True)
             title = f"Incorrectly classified values - for class {class_num}"
         elif self.config["prediction_quality"] == "false_negative":
-            indices_for_class = project.get_false_negative_indices(class_num)
+            indices_for_class = project.get_false_negative_indices_for_class(class_num)
             input_for_class = project.test_x[indices_for_class]
             analyzer_for_class = project.analyzers[analyzer].analyzer_output[indices_for_class]
             analyzer_class_mean = np.mean(analyzer_for_class, axis=0, keepdims=True)
             input_class_mean = np.mean(input_for_class, axis=0, keepdims=True)
             title = f"False negatively classified values - for class {class_num}"
         elif self.config["prediction_quality"] == "false_positive":
-            indices_for_class = project.get_false_positive_indices(class_num)
+            indices_for_class = project.get_false_positive_indices_for_class(class_num)
             input_for_class = project.test_x[indices_for_class]
             analyzer_for_class = project.analyzers[analyzer].analyzer_output[indices_for_class]
             analyzer_class_mean = np.mean(analyzer_for_class, axis=0, keepdims=True)
