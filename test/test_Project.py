@@ -6,6 +6,9 @@ import numpy as np
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from Project import Project
 
+"""
+Unit tests for Project.py
+"""
 
 @pytest.fixture
 def project():

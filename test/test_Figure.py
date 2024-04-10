@@ -4,6 +4,15 @@ import numpy as np
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from Figure import Figure_
+
+
+"""
+Unit tests for Figure.py
+Tests are only for functions which do not utilize plot creation.
+"""
+
+
+
 @pytest.fixture
 def figure():
     return Figure_()
@@ -41,3 +50,20 @@ def test_normalize():
     data = np.array([1, 2, 3, 4, 5])
     normalized_data = Figure_().normalize(data, 0, 1)
     assert np.allclose(normalized_data, np.array([0, 0.25, 0.5, 0.75, 1]))
+
+def test_upsample(figure):
+    data = np.array([1, 2, 3])
+    expected_output = np.array([1, 1.5, 2, 2.5, 3])
+    np.testing.assert_array_almost_equal(figure.upsample(data, 2), expected_output)
+
+    data = np.array([1, 2, 3])
+    expected_output = np.array([1, 1.3333333333333333, 1.6666666666666665, 2, 2.3333333333333335, 2.666666666666667, 3])
+    np.testing.assert_array_almost_equal(figure.upsample(data, 3), expected_output)
+
+    data = np.array([1, 2, 3])
+    expected_output = np.array([1, 2, 3])
+    np.testing.assert_array_almost_equal(figure.upsample(data, 1), expected_output)
+
+    data = np.array([1])
+    expected_output = np.array([1])
+    np.testing.assert_array_almost_equal(figure.upsample(data, 2), expected_output)

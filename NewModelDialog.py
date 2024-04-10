@@ -1,5 +1,5 @@
 from PySide6 import QtWidgets
-from utils import main, new_model
+from utils import new_model
 from Project import Project
 import re, os, sys
 from Analyzer import Analyzer
@@ -17,8 +17,7 @@ activations = {
 class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
     def __init__(self, main, purpose=None, parent=None):
         super().__init__(parent)
-        self.setupUi(self) 
-        self.activateWindow()
+        self.setupUi(self)
         self.app = main
         self.project = Project()
         if purpose == "project":
@@ -30,32 +29,35 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
         self.add_create_button()
         self.createButton.clicked.connect(self.create_project)
         self.errorLog = []
-        #TODO:
-        if hasattr(self, 'selectModelLine'):
-            self.selectModelLine.setText("C:/Users/dominika/vpnet/trained_models/ecg_train_test_full_model.h5")
-            self.selectCustomLine.setText("C:/Users/dominika/vpnet/tensorflow/VPLayer.py")
-            self.selectInputLine.setText("C:/Users/dominika/vpnet/tensorflow/ecg_test_data.h5")
-            self.load_input_file()
+
+    def close_window(self):
+        self.close()
 
     def create_project(self):
+        """
+        Checks if the input files and the selections are correct, and starts the main window or show an error dialog accordingly.
+        """
         self.errorLog = []
         self.check_input_files()
         self.collect_selected_analyzers()
         self.load_model_files()
         if len(self.errorLog) > 0:
             error_dialog = ErrorDialog(self.errorLog)
-            error_dialog.exec_()
+            error_dialog.exec()
             return
         self.app.project = self.project
         self.app.load_start_window()
-        self.hide()
+        self.accept()
     
     def create_analyzers(self):
+        """
+        Checks if the the selections are correct, and load the additional analyzers or show an error dialog accordingly.
+        """
         self.errorLog = []
         self.collect_selected_analyzers()
         if len(self.errorLog) > 0:
             error_dialog = ErrorDialog(self.errorLog)
-            error_dialog.exec_()
+            error_dialog.exec()
             return
         for name, analyzer in self.project.analyzers.items():
             if self.app.create_analyzer(name, analyzer):
@@ -63,9 +65,12 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
         self.app.populate_list_widget()
         self.app.listWidget.setCurrentRow(len(self.app.project.analyzers)-1)
         self.app.update_main_tab()
-        self.hide()
+        self.accept()
     
     def select_model_dialog(self):
+        """
+        Check and load model file selection.
+        """
         options = QtWidgets.QFileDialog.Options()
         options |= QtWidgets.QFileDialog.DontUseNativeDialog
         file, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select model", "", "All Files (*)", options=options)
@@ -74,6 +79,9 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
             self.selectModelLine.setText(file)
     
     def select_custom_dialog(self):
+        """
+        Check and load custom file selection.
+        """
         options = QtWidgets.QFileDialog.Options()
         options |= QtWidgets.QFileDialog.DontUseNativeDialog
         file, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select custom object file", "", "All Files (*)", options=options)
@@ -82,6 +90,9 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
             self.selectCustomLine.setText(file)
     
     def select_input_dialog(self):
+        """
+        Check and load input file selection.
+        """
         options = QtWidgets.QFileDialog.Options()
         options |= QtWidgets.QFileDialog.DontUseNativeDialog
         file, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select input", "", "All Files (*)", options=options)
@@ -91,8 +102,10 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
             self.load_input_file()
 
     def collect_selected_analyzers(self):
+        """
+        Gather the selected information on the poll from the analyzers.
+        """
         self.project.analyzers = {}
-        # Get checked state of checkboxes
         if self.checkBox_IG.isChecked():
             try:
                 ref = int(self.referenceLine.text())
@@ -136,6 +149,9 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
                 self.errorLog.append("<font color='red'>Epsilon value must be a number.</font>")  
     
     def load_model_files(self):
+        """
+        Load the trained model and the custom class from the files. 
+        """
         if os.path.isfile(self.project.custom_object_file_path):
             try:
                 file_path = self.project.custom_object_file_path
@@ -156,6 +172,8 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
 
             except Exception as err:
                 self.errorLog.append(f"<font color='red'>Error during loading custom file: {err}</font>")
+        else:
+            custom_objects = {}
         if os.path.isfile(self.project.model_file_path):
             try:
                 self.project.model = tf.keras.models.load_model(self.project.model_file_path, custom_objects=custom_objects)
@@ -169,6 +187,11 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
             self.errorLog.append("<font color='red'>Input file is not loaded.</font>")
     
     def load_input_file(self):
+        """
+        Load the input from file.
+        """
+        if self.project.input_file_path == "" and os.path.isfile(self.selectInputLine.text()):
+            self.project.input_file_path = self.selectInputLine.text()
         if os.path.isfile(self.project.input_file_path):
             try:
                 with h5py.File(self.project.input_file_path, 'r') as hf:
@@ -184,20 +207,19 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
                 self.comboBox_LRP_Epsilon.addItem(f"Index {possible_class_num}")
 
     def check_input_files(self):
+        """
+        Checks and gather errors from the file input lines.
+        """
         if self.selectModelLine.text() == "Select model":
             self.errorLog.append("<font color='red'>Model file is not selected.</font>")
         elif not os.path.isfile(self.selectModelLine.text()):
             self.errorLog.append("<font color='red'>Model file does not exits.</font>")
-        elif self.project.model_file_path == None and os.path.isfile(self.selectModelLine.text()):
+        elif self.project.model_file_path == "" and os.path.isfile(self.selectModelLine.text()):
             self.project.model_file_path = self.selectModelLine.text()
         elif not os.path.isfile(self.project.model_file_path) and os.path.isfile(self.selectModelLine.text()):
             self.project.model_file_path = self.selectModelLine.text()
-        
-        if self.selectCustomLine.text() == "Select model":
-            self.errorLog.append("<font color='red'>Select custom object python file</font>")
-        elif not os.path.isfile(self.selectCustomLine.text()):
-            self.errorLog.append("<font color='red'>Custom class file does not exits.</font>")
-        elif self.project.custom_object_file_path == None and os.path.isfile(self.selectCustomLine.text()):
+
+        if self.project.custom_object_file_path == "" and os.path.isfile(self.selectCustomLine.text()):
             self.project.custom_object_file_path = self.selectCustomLine.text()
         elif not os.path.isfile(self.project.custom_object_file_path) and os.path.isfile(self.selectCustomLine.text()):
             self.project.custom_object_file_path = self.selectCustomLine.text()
@@ -206,8 +228,9 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
             self.errorLog.append("<font color='red'>Input file is not selected.</font>")
         elif not os.path.isfile(self.selectInputLine.text()):
             self.errorLog.append("<font color='red'>Input file does not exits.</font>")
-        elif self.project.input_file_path == None and os.path.isfile(self.selectInputLine.text()):
+        elif self.project.input_file_path == "" and os.path.isfile(self.selectInputLine.text()):
             self.project.input_file_path = self.selectInputLine.text()
+            self.load_input_file()
         elif not os.path.isfile(self.project.input_file_path) and os.path.isfile(self.selectInputLine.text()):
             self.project.input_file_path = self.selectInputLine.text()
         if self.selectInputLine.text().startswith("Error in loading"):

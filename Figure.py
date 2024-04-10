@@ -3,7 +3,6 @@ import numpy as np
 from matplotlib.patches import Patch
 import random
 from matplotlib.collections import LineCollection
-from matplotlib.colors import BoundaryNorm, ListedColormap
 from matplotlib.cm import ScalarMappable
 from matplotlib.colors import LinearSegmentedColormap
 
@@ -64,39 +63,42 @@ class Figure_():
 
 
     def normalize(self, data, min_val, max_val):
+        """
+        Normalize an array between the given range.
+        """
         return (data - np.min(data)) / (np.max(data) - np.min(data)) * (max_val - min_val) + min_val
 
 
     def plot_relevance_score_distribution(self, project, analyzer, figureSize):
         """
         Avarage relevance scores over class
-
         Creates a histogram for the analyzer given as parameter.
-        The plot visualize all the classes' analyzer outcomes' distribution
-        Classes seperated by the gorund truth labels
+        The plot visualize all the class(es)' analyzer outcomes' distribution
         """
+        if figureSize.width() <= 0 or figureSize.height() <= 0:
+            figWidth = figHeight = 10
+        else:
+            figWidth = (figureSize.width() - 10) / 100
+            figHeight = (figureSize.height() - 10) / 100
 
-        fig = plt.figure(figsize=((figureSize.width() - 10)/100, (figureSize.height() - 10)/100))
+        fig = plt.figure(figsize=(figWidth, figHeight))
         ax = fig.add_subplot(111)
         colors=['darkred', 'dimgray', 'lightgray']
-        alpha_val = 0.5
+        alpha_val = 0.4
 
-        color1 = (0 / 255, 139 / 255, 139 / 255)
+        num_steps = project.number_of_classes
         color1 = (139 / 255, 0 / 255, 0 / 255)
-        color2 = (105 / 255,105 / 255,105 / 255)
-        # Define the number of steps for the transition
-        num_steps = len(self.config["channels"])
+        color2 = (0.82745, 0.82745, 0.82745)
 
-        # Create a list of colors transitioning between color1 and color2
-        colors = [color1, (1,1,1), color2]
+        colors = [color1,color2]
 
-        # Create the custom colormap
         custom_cmap = LinearSegmentedColormap.from_list("custom_colormap", colors, N=num_steps)
-        
-    # Create the histogram plot
+
         for class_num in self.config["channels"]:
-            if self.config["prediction_quality"] == "correct":
+            if self.config["prediction_quality"] == "ground_truth":
                 class_indices = project.get_truth_class_indices(class_num)
+            elif self.config["prediction_quality"] == "correct":
+                class_indices = project.get_correct_pred_indices_for_class(class_num)
             elif self.config["prediction_quality"] == "incorrect":
                 class_indices = project.get_incorrect_prediction_indices_for_class(class_num)
             elif self.config["prediction_quality"] == "false_negative":
@@ -105,7 +107,6 @@ class Figure_():
                 class_indices = project.get_false_positive_indices_for_class(class_num)
             else:
                 class_indices = []
-
             class_values = project.test_x[class_indices]
             analyzer_class = project.analyzers[analyzer].analyzer_output[class_indices]
             if class_values.shape[0] == 0:
@@ -117,24 +118,30 @@ class Figure_():
             elif self.config["plot_type"]["distribution"]["histogram"]["input"]:
                 ax.hist(class_values.flatten(), bins=bin_num, color=custom_cmap(class_num), alpha = alpha_val, label=f"Class_{class_num}")
                 label = "Input"
-        #◙ax.set_title(analyzer, fontsize = 16)
-        #◙ax.title.set_size(10)
         ax.set_yscale("log")
         ax.legend()
-        #ax.set_ylabel('count')
         ax.set_xlabel(label,fontsize = 'medium')
         fig.tight_layout()
-        #plt.savefig(f"{Path.cwd()}\..\plots\latest\ecg\hist_plot_distribution\dist_ecg_{title}.png")
-        #plt.show()
         return fig
     
     def plot_grouped_boxplot(self, project, analyzer, figureSize):
+        """
+        Creatue boxplot of the relevance scores for every nth recording.
+        The x-axis is sorted by the prediction of the model for the respective recording.
+        """
         class_num = int(self.config["class"])
         sample_freq = int(self.config["plot_type"]["distribution"]["box_plot"]["sample_frequency"])
         class_probabilities = project.predictions[:, class_num]
         sorted_indices = np.argsort(class_probabilities)
-        
-        fig = plt.figure(figsize=((figureSize.width() - 10)/100, (figureSize.height() - 10)/100))
+
+        if figureSize.width() <= 0 or figureSize.height() <= 0:
+            figWidth = figHeight = 10
+        else:
+            figWidth = (figureSize.width() - 10) / 100
+            figHeight = (figureSize.height() - 10) / 100
+
+        fig = plt.figure(figsize=(figWidth, figHeight))
+
         ax = fig.add_subplot(111)
         correct_pos_indices = project.get_correct_pos_prediction_indices_for_class(class_num)
         correct_neg_indices = project.get_correct_neg_prediction_indices_for_class(class_num)
@@ -147,7 +154,6 @@ class Figure_():
         sorted_correct_pos_indices = np.where(np.isin(sorted_indices, correct_pos_indices))[0]
 
         output = project.analyzers[analyzer].analyzer_output[sorted_indices].T
-        #plt.boxplot(output[:,sorted_correct_indices], positions=sorted_correct_indices, flierprops = dict(marker='.', markersize=3, linestyle='none', markeredgecolor='dimgray'), patch_artist=True, boxprops = dict(facecolor = "dimgray"))
         ax.boxplot(output[:,sorted_correct_pos_indices[::sample_freq]], positions=sorted_correct_pos_indices[::sample_freq], flierprops = dict(marker='.', markersize=3, linestyle='none', markeredgecolor='indianred'), patch_artist=True, boxprops = dict(facecolor = "indianred"))
         ax.boxplot(output[:,sorted_correct_neg_indices[::sample_freq]], positions=sorted_correct_neg_indices[::sample_freq], flierprops = dict(marker='.', markersize=3, linestyle='none', markeredgecolor='powderblue'), patch_artist=True, boxprops = dict(facecolor = "powderblue"))
         ax.boxplot(output[:,sorted_false_neg_indices[::sample_freq]], positions=sorted_false_neg_indices[::sample_freq], flierprops = dict(marker='.', markersize=3, linestyle='none', markeredgecolor='darkcyan'), patch_artist=True, boxprops = dict(facecolor = "darkcyan"))
@@ -159,8 +165,6 @@ class Figure_():
                             Patch(facecolor='darkred', edgecolor='darkred', label='False positive')]
 
         ax.legend(handles=legend_patches, loc='upper center', bbox_to_anchor=(0.5, 1.2), ncol=len(legend_patches))
-
-        #ax.set_title(f"{analyzer} vs. probability of {classes[class_num]} signal according to the model")
         ax.set_xlabel(f"Probability of signal belongs to class_{class_num}")
         ax.set_ylabel("Relevance Scores")
         min_, max_ = np.percentile(project.analyzers[analyzer].analyzer_output.T, [0.1,99.9])
@@ -176,20 +180,25 @@ class Figure_():
         return fig
 
     def upsample(self, data, factor):
-        new_points = factor - 1
-        interpolated_data = []
+        """
+        Upsamples a list of data points by linear interpolating n new points between the original ones.
+        """
+        if len(data) == 0:
+            return np.array([])
 
+        new_points = factor - 1
+        interpolated_data = np.empty((len(data) - 1) * new_points + len(data))
+        interpolated_data[::factor] = data
         for i in range(len(data) - 1):
-            interpolated_data.append(data[i])
             for n in range(1, new_points + 1):
                 interpolated_value = data[i] + (data[i + 1] - data[i]) * n / factor
-                interpolated_data.append(interpolated_value)
-
-        interpolated_data.append(data[-1])
-
+                interpolated_data[i * factor + n] = interpolated_value
         return interpolated_data
 
     def plot_comparison(self, project, analyzer, figureSize):
+        """
+        Create line or scatter plots with randomized single original recording and/or average recordings and/or average relevance scores.
+        """
         class_num = int(self.config["class"])
         if self.config["prediction_quality"] == "correct":
             indices_for_class = project.get_correct_pos_prediction_indices_for_class(class_num)
@@ -197,60 +206,62 @@ class Figure_():
             analyzer_for_class = project.analyzers[analyzer].analyzer_output[indices_for_class]
             analyzer_class_mean = np.mean(analyzer_for_class, axis=0, keepdims=True)
             input_class_mean = np.mean(input_for_class, axis=0, keepdims=True)
-            title = f"Correctly classified values - for class {class_num}"
         elif self.config["prediction_quality"] == "incorrect":
             indices_for_class = project.get_incorrect_prediction_indices_for_class(class_num)
             input_for_class = project.test_x[indices_for_class]
             analyzer_for_class = project.analyzers[analyzer].analyzer_output[indices_for_class]
             analyzer_class_mean = np.mean(analyzer_for_class, axis=0, keepdims=True)
             input_class_mean = np.mean(input_for_class, axis=0, keepdims=True)
-            title = f"Incorrectly classified values - for class {class_num}"
         elif self.config["prediction_quality"] == "false_negative":
             indices_for_class = project.get_false_negative_indices_for_class(class_num)
             input_for_class = project.test_x[indices_for_class]
             analyzer_for_class = project.analyzers[analyzer].analyzer_output[indices_for_class]
             analyzer_class_mean = np.mean(analyzer_for_class, axis=0, keepdims=True)
             input_class_mean = np.mean(input_for_class, axis=0, keepdims=True)
-            title = f"False negatively classified values - for class {class_num}"
         elif self.config["prediction_quality"] == "false_positive":
             indices_for_class = project.get_false_positive_indices_for_class(class_num)
             input_for_class = project.test_x[indices_for_class]
             analyzer_for_class = project.analyzers[analyzer].analyzer_output[indices_for_class]
             analyzer_class_mean = np.mean(analyzer_for_class, axis=0, keepdims=True)
             input_class_mean = np.mean(input_for_class, axis=0, keepdims=True)
-            title = f"False positively classified values - for class {class_num}"
 
         if self.config["plot_type"]["comparison"]["random_count"] is None:
             random_indices_to_plot = random.sample(range(input_for_class.shape[0]), 1)
             self.config["plot_type"]["comparison"]["random_count"] = random_indices_to_plot[0]
 
-        color1 = (0 / 255, 139 / 255, 139 / 255)
-        color2 = (139 / 255, 0 / 255, 0 / 255)
-        # Define the number of steps for the transition
+        blue = (0 / 255, 139 / 255, 139 / 255)
+        red = (139 / 255, 0 / 255, 0 / 255)
         num_steps = 256
+        colors = [blue, (0.82745, 0.82745, 0.82745) ,red]
 
-        # Create a list of colors transitioning between color1 and color2
-        colors = [color1, (0.82745, 0.82745, 0.82745) ,color2]
-
-        # Create the custom colormap
         custom_cmap = LinearSegmentedColormap.from_list("custom_colormap", colors, N=num_steps)
 
-        fig = plt.figure(figsize=((figureSize.width() - 10)/100, (figureSize.height() - 10)/100))
+        if figureSize.width() <= 0 or figureSize.height() <= 0:
+            figWidth = figHeight = 10
+        else:
+            figWidth = (figureSize.width() - 10) / 100
+            figHeight = (figureSize.height() - 10) / 100
+
+        fig = plt.figure(figsize=(figWidth, figHeight))
+
         ax = fig.add_subplot(111)
+        avg_re = avg_an = single_legend = None
         if self.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["activated"]:
             y = self.upsample(self.normalize(input_class_mean[0,:], -1, 1),5)
             x = range(len(y))
             if self.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["scatter"]:
-                ax.scatter(x, y, color="indianred", label="Input mean", s=1)
+                ax.scatter(x, y, color="indianred", label="Input mean", s=1.5)
             elif self.config["plot_type"]["comparison"]["channels"]["average_sample_over_class"]["line"]:
-                ax.plot(y, color="indianred", linewidth = 1, label="Input mean")
+                ax.plot(y, color="indianred", linewidth = 1.5, label="Input mean")
+            avg_re = plt.Line2D([0], [0], color="indianred", linewidth=3, label='Recording mean')
         if self.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["activated"]:
             y = self.upsample(self.normalize(analyzer_class_mean[0,:], -1, 1),5)
             x = range(len(y))
             if self.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["scatter"]:
-                ax.scatter(x, y, color="dimgray", label="Analyzer mean", s=1)
+                ax.scatter(x, y, color="dimgray", label="Analyzer mean", s=1.5)
             elif self.config["plot_type"]["comparison"]["channels"]["average_analyzer_score"]["line"]:
-                ax.plot(y, color="dimgray", linewidth = 1, label="Analyzer mean")
+                ax.plot(y, color="dimgray", linewidth = 1.5, label="Analyzer mean")
+            avg_an = plt.Line2D([0], [0], color="dimgray", linewidth=3, label='Analyzer mean')
         if self.config["plot_type"]["comparison"]["channels"]["single_sample"]["activated"]:
             # single input data
             color_base = self.upsample(self.normalize(analyzer_for_class[self.config["plot_type"]["comparison"]["random_count"],:], -1, 1),5)
@@ -280,12 +291,13 @@ class Figure_():
                 cbar.set_label('Analyzer value')
                 ax.set_xlim(0, len(y))
                 ax.set_ylim(-1.1, 1.1)
-        plt.figure(figsize=(10,6))
+            single_legend = plt.Line2D([0], [0], color=blue, linewidth=3, label='Single recording')
 
         for h_line in np.arange(-1,1.25,0.5):
             ax.axhline(y = h_line, color = "gray", linestyle = "dashed", linewidth = 0.25)
-        
+
+        handle = [line for line in [avg_re, avg_an, single_legend] if line is not None]
+        ax.legend(handles=handle, loc='upper right')
         ax.set_yticks(np.arange(-1, 1.25, 0.25))
-        ax.legend(fontsize='large', loc='upper right')
-        #ax.set_title(title)
+        fig.tight_layout()
         return fig

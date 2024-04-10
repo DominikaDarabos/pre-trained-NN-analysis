@@ -1,11 +1,10 @@
-from Analyzer import Analyzer
 import numpy as np
 
 class Project():
     def __init__(self):
-        self.model_file_path = None
-        self.custom_object_file_path = None
-        self.input_file_path = None
+        self.model_file_path = ""
+        self.custom_object_file_path = ""
+        self.input_file_path = ""
         self.model = None
         self.model_wo_softmax = None
         self.test_x = None
