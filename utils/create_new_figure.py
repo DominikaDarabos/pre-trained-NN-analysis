@@ -8,18 +8,13 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
-    QMetaObject, QObject, QPoint, QRect,
-    QSize, QTime, QUrl, Qt)
-from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
-    QFont, QFontDatabase, QGradient, QIcon,
-    QImage, QKeySequence, QLinearGradient, QPainter,
-    QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDialog,
+from PySide6.QtCore import (QCoreApplication, QMetaObject, QSize)
+from PySide6.QtWidgets import (QCheckBox, QComboBox,
     QFrame, QGridLayout, QHBoxLayout, QLabel,
-    QPushButton, QRadioButton, QSizePolicy, QVBoxLayout,
-    QWidget,QButtonGroup, QLineEdit)
-
+    QPushButton, QRadioButton, QVBoxLayout, QButtonGroup, QLineEdit)
+"""
+Setting up the default UI elements for NewFigureDialog.
+"""
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         if not Dialog.objectName():
@@ -99,34 +94,30 @@ class Ui_Dialog(object):
         self.gridLayout_2 = QGridLayout(self.baseFrame_2)
         self.gridLayout_2.setObjectName(u"gridLayout_2")
         self.gridLayout_6.addWidget(self.baseFrame, 0, 0, 1, 1)
-
         self.retranslateUi(Dialog)
-
         QMetaObject.connectSlotsByName(Dialog)
-    # setupUi
+
 
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(QCoreApplication.translate("Dialog", u"Create new figure", None))
         self.classTitle.setText(QCoreApplication.translate("Dialog", u"Class", None))
-
         self.predQualTitle.setText(QCoreApplication.translate("Dialog", u"Prediction quality", None))
         self.predQualCombo.setItemText(0, QCoreApplication.translate("Dialog", u"Correct", None))
         self.predQualCombo.setItemText(1, QCoreApplication.translate("Dialog", u"Incorrect", None))
         self.predQualCombo.setItemText(2, QCoreApplication.translate("Dialog", u"False positive", None))
         self.predQualCombo.setItemText(3, QCoreApplication.translate("Dialog", u"False negative", None))
-
         self.plotTypeTitle.setText(QCoreApplication.translate("Dialog", u"Plot type", None))
         self.plotTypeCombo.setItemText(0, QCoreApplication.translate("Dialog", u"Comparison", None))
         self.plotTypeCombo.setItemText(1, QCoreApplication.translate("Dialog", u"Distribution", None))
         self.plotTypeCombo.setItemText(2, "")
-
         self.cancelButton.setText(QCoreApplication.translate("Dialog", u"Cancel", None))
         self.createButton.setText(QCoreApplication.translate("Dialog", u"Create", None))
-    # retranslateUi
 
     def setup_widgets_for_comparison(self):
+        """
+        Necessary UI object for the comparison figures.
+        """
         self.clear_frame(self.baseFrame_2)
-
         self.channelsFrame = QFrame(self.baseFrame_2)
         self.channelsFrame.setObjectName(u"channelsFrame")
         self.channelsFrame.setFrameShape(QFrame.StyledPanel)
@@ -227,9 +218,6 @@ class Ui_Dialog(object):
         self.gridLayout_4.addWidget(self.averageAnalyzerFrame, 4, 0, 1, 1)
         self.gridLayout_2.addWidget(self.radioFrame, 0, 1, 1, 1)
         self.gridLayout.addWidget(self.baseFrame_2, 0, 1, 1, 1)
-
-
-
         self.channelsTitle.setText(QCoreApplication.translate("Dialog", u"Channels", None))
         self.singleSampleCheckbox.setText(QCoreApplication.translate("Dialog", u"Single input", None))
         self.averageSampleCheckbox.setText(QCoreApplication.translate("Dialog", u"Average input over class", None))
@@ -247,6 +235,9 @@ class Ui_Dialog(object):
             self.predQualCombo.removeItem(4)
     
     def setup_widgets_for_distribution(self):
+        """
+        Necessary UI object for the distribution figures.
+        """
         self.buttonGroup = QButtonGroup(self)
         self.clear_frame(self.baseFrame_2)
     
@@ -312,12 +303,9 @@ class Ui_Dialog(object):
         self.histRadio = QRadioButton(self.histFrame)
         self.histRadio.setObjectName(u"histRadio")
         self.buttonGroup.addButton(self.histRadio)
-
         self.gridLayout_3.addWidget(self.histRadio, 0, 0, 1, 1)
-
         self.histNumOfBins = QLineEdit(self.histFrame)
         self.histNumOfBins.setObjectName(u"histNumOfBins")
-
         self.gridLayout_3.addWidget(self.histNumOfBins, 1, 0, 1, 1)
         self.gridLayout_2.addWidget(self.histFrame, 2, 0, 1, 1)
         self.gridLayout.addWidget(self.baseFrame_2, 0, 1, 1, 1)
@@ -330,7 +318,6 @@ class Ui_Dialog(object):
         self.inputRadio.setText(QCoreApplication.translate("Dialog", u"Input", None))
         self.showAllInputRadio.setText(QCoreApplication.translate("Dialog", u"Show all class", None))
         self.histNumOfBins.setText(QCoreApplication.translate("baseLayout", u"Number of bins (default 30)", None))
-
         self.predQualCombo.insertItem(4, "Ground truth")
 
 

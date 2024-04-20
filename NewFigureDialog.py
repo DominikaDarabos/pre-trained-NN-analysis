@@ -7,13 +7,17 @@ from ErrorDialog import ErrorDialog
 
 
 class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
-    def __init__(self, main, place, parent=None):
+    """
+    Dialog for collecting parameters of a new figure.
+    """
+    def __init__(self, parent, place):
         super().__init__(parent)
-        self.setupUi(self) 
+        self.setupUi(self)
+        self.setWindowTitle("Create new figure")
         self.setup_widgets_for_comparison()
-        self.app = main
+        self.app = parent
         self.place = place
-        self.plotTypeCombo.currentIndexChanged.connect(self.on_combobox_selection_change)
+        self.plotTypeCombo.currentIndexChanged.connect(self.on_plot_type_selection_change)
         self.createButton.clicked.connect(self.check_form)
         self.cancelButton.clicked.connect(self.close_window)
         self.load_classes()
@@ -31,7 +35,7 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
             error_dialog.exec()
             return
 
-    def on_combobox_selection_change(self):
+    def on_plot_type_selection_change(self):
         """
         Changes the GUI according to the plot type selection.
         """

@@ -1,5 +1,8 @@
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QTextBrowser, QPushButton
 class ErrorDialog(QDialog):
+    """
+    Dialog for listing all the errors given as a parameter.
+    """
     def __init__(self, error_message):
         super().__init__()
         self.setWindowTitle("Error")

@@ -2,7 +2,7 @@ from PySide6 import QtWidgets
 from utils import new_model
 from Project import Project
 import re, os, sys
-from Analyzer import Analyzer
+from Analyzer import LRP_Z_Analyzer, LRP_AB_Analyzer, IG_Analyzer, LRP_E_Analyzer
 import h5py
 import importlib.util
 import innvestigate
@@ -15,10 +15,14 @@ activations = {
 }
 
 class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
-    def __init__(self, main, purpose=None, parent=None):
+    """
+    Dialog creating the project, collect and load input files, and/or creating analyzers for the Project.
+    """
+    def __init__(self, parent, purpose=None):
         super().__init__(parent)
         self.setupUi(self)
-        self.app = main
+        self.setWindowTitle("Select analyzers")
+        self.app = parent
         self.project = Project()
         if purpose == "project":
             self.add_input_frame()
@@ -99,7 +103,7 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
         if file:
             self.project.set_input_file(file)
             self.selectInputLine.setText(file)
-            self.load_input_file()
+            self.load_data_file()
 
     def collect_selected_analyzers(self):
         """
@@ -111,17 +115,17 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
                 ref = int(self.referenceLine.text())
                 step = int(self.stepLine.text())
                 name = f"IG - {self.comboBox_IG.currentText()} - {ref} - {step}"
-                self.project.analyzers[name] = Analyzer(reference_input = ref, steps = step)
+                self.project.analyzers[name] = IG_Analyzer(reference_input = ref, steps = step)
                 self.project.analyzers[name].activation = activations[self.comboBox_IG.currentText()]
             except:
                 self.errorLog.append("<font color='red'>Integrated gradient's reference and step value have to be numbers.</font>")
         if self.checkBox_LRP_Z.isChecked():
             name = f"LRP_Z - {self.comboBox_LRP_Z.currentText()}"
             if self.comboBox_LRP_Z.currentText().startswith("Index"):
-                self.project.analyzers[name] = Analyzer(neuron = int(self.comboBox_LRP_Z.currentText().split(" ")[-1]))
+                self.project.analyzers[name] = LRP_Z_Analyzer(neuron = int(self.comboBox_LRP_Z.currentText().split(" ")[-1]))
                 self.project.analyzers[name].activation = "index"
             else:
-                self.project.analyzers[name] = Analyzer()
+                self.project.analyzers[name] = LRP_Z_Analyzer()
                 self.project.analyzers[name].activation = activations[self.comboBox_LRP_Z.currentText()]
         if self.checkBox_LRP_AB.isChecked():
             alphaBetaString = self.AlphaBetaComboBox.currentText()
@@ -129,21 +133,21 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
             numbers_as_integers = [int(num_str) for num_str in numbers_as_strings]
             name = f"LRP_AB - {self.comboBox_LRP_AB.currentText()} - {numbers_as_integers[0]} - {numbers_as_integers[1]}"
             if self.comboBox_LRP_AB.currentText().startswith("Index"):
-                self.project.analyzers[name] =  Analyzer(alpha = numbers_as_integers[0], beta = numbers_as_integers[1],\
+                self.project.analyzers[name] =  LRP_AB_Analyzer(alpha = numbers_as_integers[0], beta = numbers_as_integers[1],\
                                                               neuron = int(self.comboBox_LRP_AB.currentText().split(" ")[-1]))
                 self.project.analyzers[name].activation = "index"
             else:
-                self.project.analyzers[name] =  Analyzer(alpha = numbers_as_integers[0], beta = numbers_as_integers[1])
+                self.project.analyzers[name] =  LRP_AB_Analyzer(alpha = numbers_as_integers[0], beta = numbers_as_integers[1])
                 self.project.analyzers[name].activation = activations[self.comboBox_LRP_AB.currentText()]
         if self.checkBox_LRP_Epsilon.isChecked():
             try:
                 eps = float(self.EpsilonInput.text())
                 name = f"LRP_Epsilon - {self.comboBox_LRP_Epsilon.currentText()} - {eps}"
                 if self.comboBox_LRP_Epsilon.currentText().startswith("Index"):
-                    self.project.analyzers[name] = Analyzer(epsilon = eps, neuron = int(self.comboBox_LRP_Epsilon.currentText().split(" ")[-1]))
+                    self.project.analyzers[name] = LRP_E_Analyzer(epsilon = eps, neuron = int(self.comboBox_LRP_Epsilon.currentText().split(" ")[-1]))
                     self.project.analyzers[name].activation = "index"
                 else:
-                    self.project.analyzers[name] = Analyzer(epsilon = eps)
+                    self.project.analyzers[name] = LRP_E_Analyzer(epsilon = eps)
                     self.project.analyzers[name].activation = activations[self.comboBox_LRP_Epsilon.currentText()]
             except:
                 self.errorLog.append("<font color='red'>Epsilon value must be a number.</font>")  
@@ -186,7 +190,7 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
         else:
             self.errorLog.append("<font color='red'>Input file is not loaded.</font>")
     
-    def load_input_file(self):
+    def load_data_file(self):
         """
         Load the input from file.
         """
@@ -230,7 +234,7 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
             self.errorLog.append("<font color='red'>Input file does not exits.</font>")
         elif self.project.input_file_path == "" and os.path.isfile(self.selectInputLine.text()):
             self.project.input_file_path = self.selectInputLine.text()
-            self.load_input_file()
+            self.load_data_file()
         elif not os.path.isfile(self.project.input_file_path) and os.path.isfile(self.selectInputLine.text()):
             self.project.input_file_path = self.selectInputLine.text()
         if self.selectInputLine.text().startswith("Error in loading"):

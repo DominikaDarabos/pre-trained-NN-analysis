@@ -13,38 +13,34 @@ import sys, os, io
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-
 import innvestigate
 
 tf.compat.v1.disable_eager_execution()
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 
-def apply_stylesheet(app):
-    script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-    qss_path = os.path.join(script_dir, "qss", "MacOS.qss")
-    style_file = QtCore.QFile(qss_path)
-    if style_file.open(QtCore.QFile.ReadOnly | QtCore.QFile.Text):
-        stream = QtCore.QTextStream(style_file)
-        app.setStyleSheet(stream.readAll())
-        style_file.close()
-
 class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
+    """
+    Main dialog that modify, connect and operates all the processes from the different classes.
+    """
     def __init__(self, purpose = None):
         super(MainApp, self).__init__()
         self.setupUi(self)
         self.purpose = purpose
         if purpose is None:
+            self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             self.showMaximized()
         self.setWindowTitle("DNN Analyzer")
-        self.setWindowIcon(QIcon('ana.png'))
+        script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+        logo_path = find_file(script_dir, 'logo.png')
+        self.setWindowIcon(QIcon(logo_path))
         self.project = None
         self.active_upper_plot = None
         self.active_bottom_plot = None
         self.changedTab = None
         self.model_info = None
         self.qt_dialog = None
-
+    
     """
     Functions for initial application loading
     """
@@ -74,7 +70,7 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
 
         clearUpper.triggered.connect(lambda: self.clear_figure("upper"))
         clearBottom.triggered.connect(lambda: self.clear_figure("bottom"))
-        newAnalyzer.triggered.connect(self.add_new_analyzer)
+        newAnalyzer.triggered.connect(self.show_new_analyzer_dialog)
         return menu
 
 
@@ -141,6 +137,35 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         self.modelInfo.append("<b>Layer</b> - <b>Output</b> - <b>Params</b>")
         for idx in range(len(self.model_info["layers"])):
             self.modelInfo.append(f"<b>{self.model_info['layers'][idx]}</b> - {self.model_info['shapes'][idx]} - {self.model_info['params'][idx]}")
+        
+        self.outputDataTitle.setStyleSheet("""
+            font-weight: bold;
+            background-color: #4a4a4a;
+            color: white;
+            padding: 5px;
+            border-radius: 8px;
+        """)
+        self.inputDataTitle.setStyleSheet("""
+            font-weight: bold;
+            background-color: #4a4a4a;
+            color: white;
+            padding: 5px;
+            border-radius: 8px;
+        """)
+        self.modelDataTitle.setStyleSheet("""
+            font-weight: bold;
+            background-color: #4a4a4a;
+            color: white;
+            padding: 5px;
+            border-radius: 8px;
+        """)
+        self.validationTitle.setStyleSheet("""
+            font-weight: bold;
+            background-color: #4a4a4a;
+            color: white;
+            padding: 5px;
+            border-radius: 8px;
+        """)
 
 
     def add_info_and_error_tab(self):
@@ -153,7 +178,7 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         self.info_and_error_browser.append("Input files are loaded successfully.")
         layout.addWidget(self.info_and_error_browser)
         error_tab.setLayout(layout)
-        self.infoWidget.addTab(error_tab, "Infos \& Errors")
+        self.infoWidget.addTab(error_tab, "Infos | Errors")
 
 
     def plot_input_figures(self):
@@ -225,6 +250,7 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         tab_layout.addWidget(graphics_view)
 
         self.infoWidget.addTab(tab_widget, "Model")
+        self.infoWidget.setStyleSheet("QTabBar::tab { font-weight: bold; border-color: #4a4a4a; }")
 
 
     def load_start_window(self):
@@ -276,7 +302,6 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         analyzer = self.get_current_analyzer()
         figure = self.project.analyzers[analyzer].ui_elements_config[f"{position}_figures"][tab_number]
         fig = figure.config["fig"]
-        print("FIG: ", fig)
         # Now you can save the figure as needed
         file_path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save Figure", "", "PNG Files (*.png);;JPEG Files (*.jpg)")
         if file_path:
@@ -284,11 +309,11 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
             print(f"Figure saved to: {file_path}")
 
 
-    def add_new_analyzer(self):
+    def show_new_analyzer_dialog(self):
         """
         Opens up the analyzer selector dialog.
         """
-        self.qt_dialog = NewModelDialog(self)
+        self.qt_dialog = NewModelDialog(parent=self)
         self.qt_dialog.createButton.setText("Create analyzers")
         self.qt_dialog.createButton.clicked.disconnect(self.qt_dialog.create_project)
         self.qt_dialog.createButton.clicked.connect(self.qt_dialog.create_analyzers)
@@ -675,11 +700,11 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
                 print(f"{position}Plot_{tab_number} not found")
         figure = self.project.analyzers[analyzer].ui_elements_config[f"{position}_figures"][tab_number]
         if "distribution" in figure.config["plot_type"] and figure.config["plot_type"]["distribution"]["histogram"]["activated"]:
-            fig = figure.plot_relevance_score_distribution(self.project, analyzer, figureSize = current_plot.size())
+            fig = figure.create_hist_distribution_plot(self.project, analyzer, figureSize = current_plot.size())
         elif "distribution" in figure.config["plot_type"] and figure.config["plot_type"]["distribution"]["box_plot"]["activated"]:
-            fig = figure.plot_grouped_boxplot(self.project, analyzer, figureSize = current_plot.size())
+            fig = figure.create_grouped_boxplot(self.project, analyzer, figureSize = current_plot.size())
         elif "comparison" in figure.config["plot_type"]:
-            fig = figure.plot_comparison(self.project, analyzer, figureSize = current_plot.size())
+            fig = figure.create_comparison_plot(self.project, analyzer, figureSize = current_plot.size())
         figure.config["fig"] = fig
         canvas = FigureCanvas(fig)
         scene.addWidget(canvas)
@@ -714,11 +739,33 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
             return None, None
         return position, tab_number
 
+def find_file(directory, filename):
+    for root, dirs, files in os.walk(directory):
+        if filename in files:
+            return os.path.join(root, filename)
+    return None
+
+def apply_stylesheet(app):
+    script_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+    qss_filename = "MacOS.qss"
+    qss_path = find_file(script_dir, qss_filename)
+    if qss_path is None:
+        print("Stylesheet file '{}' not found in directory '{}' or its subdirectories.".format(qss_filename, script_dir))
+        return
+    style_file = QtCore.QFile(qss_path)
+    if not style_file.exists():
+        print("Stylesheet file does not exist:", qss_path)
+        return
+    if style_file.open(QtCore.QFile.ReadOnly | QtCore.QFile.Text):
+        print("stylesheet is open and used")
+        stream = QtCore.QTextStream(style_file)
+        app.setStyleSheet(stream.readAll())
+        style_file.close()
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication()
     apply_stylesheet(app)
     qt_app = MainApp()
-    qt_app.qt_dialog = NewModelDialog(qt_app, purpose="project")
+    qt_app.qt_dialog = NewModelDialog(parent=qt_app, purpose="project")
     qt_app.qt_dialog.show()
     app.exec()

@@ -7,6 +7,9 @@ from matplotlib.cm import ScalarMappable
 from matplotlib.colors import LinearSegmentedColormap
 
 class Figure_():
+    """
+    Creates matplotlib figures and stores the plot's attributes.
+    """
     def __init__(self):
         self.config = {
             "class": None,
@@ -69,7 +72,7 @@ class Figure_():
         return (data - np.min(data)) / (np.max(data) - np.min(data)) * (max_val - min_val) + min_val
 
 
-    def plot_relevance_score_distribution(self, project, analyzer, figureSize):
+    def create_hist_distribution_plot(self, project, analyzer, figureSize):
         """
         Avarage relevance scores over class
         Creates a histogram for the analyzer given as parameter.
@@ -124,7 +127,7 @@ class Figure_():
         fig.tight_layout()
         return fig
     
-    def plot_grouped_boxplot(self, project, analyzer, figureSize):
+    def create_grouped_boxplot(self, project, analyzer, figureSize):
         """
         Creatue boxplot of the relevance scores for every nth recording.
         The x-axis is sorted by the prediction of the model for the respective recording.
@@ -195,7 +198,7 @@ class Figure_():
                 interpolated_data[i * factor + n] = interpolated_value
         return interpolated_data
 
-    def plot_comparison(self, project, analyzer, figureSize):
+    def create_comparison_plot(self, project, analyzer, figureSize):
         """
         Create line or scatter plots with randomized single original recording and/or average recordings and/or average relevance scores.
         """
