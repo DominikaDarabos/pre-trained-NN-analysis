@@ -1,11 +1,11 @@
 import sys
 import os
 import pytest
-
+from PySide6.QtWidgets import QDialog
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from NewFigureDialog import NewFigureDialog
 from Project import Project
-from Analyzer import Analyzer
+from Analyzer import IG_Analyzer
 
 """
 GUI tests for NewFigureDialog.
@@ -16,17 +16,18 @@ Used original classes:
 """
 
 
-class mainMock():
+class mainMock(QDialog):
     def __init__(self):
+        super().__init__()
         self.project = Project()
         self.project.number_of_classes = 3
-        self.project.analyzers["IG"] = Analyzer()
+        self.project.analyzers["IG"] = IG_Analyzer(reference_input=0, steps=64)
     
     def get_current_analyzer(self):
         return "IG"
 
     def create_new_figure(self, place, figure):
-        return
+        pass
 
 
 @pytest.fixture
@@ -44,7 +45,7 @@ def dialog_bottom(qtbot):
     return dialog
 
 
-def test_on_combobox_selection_change(dialog_upper):
+def test_on_plot_type_selection_change(dialog_upper):
     dialog_upper.plotTypeCombo.setCurrentText("Comparison")
     assert hasattr(dialog_upper, "singleSampleCheckbox")
     assert hasattr(dialog_upper, "averageSampleScatterRadio")
