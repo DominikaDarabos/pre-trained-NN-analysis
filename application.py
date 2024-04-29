@@ -88,10 +88,10 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
             """
         self.inputDataInfo.setHtml(input_info)
 
-        type_of_output = str(type(self.project.test_x)).replace("<class '", "").replace("'>", "")
-        type_of_one_output = str((type(self.project.test_x[0,0]))).replace("<class '", "").replace("'>", "")
+        type_of_output = str(type(self.project.test_y)).replace("<class '", "").replace("'>", "")
+        type_of_one_output = str((type(self.project.test_y[0,0]))).replace("<class '", "").replace("'>", "")
         output_info = f"""
-            <b>shape:</b> {self.project.test_x.shape}<br/>
+            <b>shape:</b> {self.project.test_y.shape}<br/>
             <b>type of output:</b> {type_of_output}<br/>
             <b>type of one element:</b> {type_of_one_output}<br/>
             <b>first element:</b> {self.project.test_x[:1]}
@@ -276,7 +276,6 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         self.upperPlotFrame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.bottomPlotFrame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        # set sizes
         half_height = int(self.height() / 2)
         _width = int(self.width() * 0.6)
         
@@ -300,13 +299,14 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         elif position == "bottom":
             tab_number = self.active_bottom_plot
         analyzer = self.get_current_analyzer()
-        figure = self.project.analyzers[analyzer].ui_elements_config[f"{position}_figures"][tab_number]
-        fig = figure.config["fig"]
-        # Now you can save the figure as needed
-        file_path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save Figure", "", "PNG Files (*.png);;JPEG Files (*.jpg)")
-        if file_path:
-            fig.savefig(file_path, dpi = 150)
-            print(f"Figure saved to: {file_path}")
+        if analyzer != "":
+            if len(self.project.analyzers[analyzer].ui_elements_config[f"{position}_figures"]) > 0:
+                figure = self.project.analyzers[analyzer].ui_elements_config[f"{position}_figures"][tab_number]
+                fig = figure.config["fig"]
+                file_path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save Figure", "", "PNG Files (*.png);;JPEG Files (*.jpg)")
+                if file_path:
+                    fig.savefig(file_path, dpi = 150)
+                    self.info_and_error_browser.append(f"Figure saved to: {file_path}")
 
 
     def show_new_analyzer_dialog(self):
@@ -331,13 +331,16 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         for key in keys_to_delete:
             del self.project.analyzers[key]
         if len(self.project.analyzers) == 0:
-            self.info_and_error_browser.append("<font color='red'>- ERROR: There is no successfully ran analyzer.</font>")
+            self.info_and_error_browser.append("<font color='red'>- There is no successfully ran analyzer.</font>")
 
 
     def create_analyzer(self, name, analyzer):
         """
-        Check and create an analyzer.
+        Check and create an analyzer, if it does not exist already.
         """
+        if name in self.project.analyzers and analyzer.innvestigate_analyzer != None:
+            self.info_and_error_browser.append(f"{name} analyzer already exists.")
+            return False
         if name.startswith("IG"):
             try:
                 analyzer.innvestigate_analyzer = \
@@ -419,16 +422,17 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         self.upperPlotTabWidget.clear()
         self.bottomPlotTabWidget.clear()
         analyzer = self.get_current_analyzer()
-        upperPlotCount = self.project.analyzers[analyzer].ui_elements_config["upper_plot_count"]
-        for tab_idx in range(upperPlotCount):
-            upperPlot = self.project.analyzers[analyzer].ui_elements_config["upper_tabs"][f"tab_{tab_idx}"]
-            self.upperPlotTabWidget.addTab(upperPlot, f"Tab {tab_idx + 1}")
-            self.load_plot("upper", tab_idx)
-        bottomPlotCount = self.project.analyzers[analyzer].ui_elements_config["bottom_plot_count"]
-        for tab_idx in range(bottomPlotCount):
-            bottomPlot = self.project.analyzers[analyzer].ui_elements_config["bottom_tabs"][f"tab_{tab_idx}"]
-            self.bottomPlotTabWidget.addTab(bottomPlot, f"Tab {tab_idx + 1}")
-            self.load_plot("bottom", tab_idx)
+        if analyzer != "":
+            upperPlotCount = self.project.analyzers[analyzer].ui_elements_config["upper_plot_count"]
+            for tab_idx in range(upperPlotCount):
+                upperPlot = self.project.analyzers[analyzer].ui_elements_config["upper_tabs"][f"tab_{tab_idx}"]
+                self.upperPlotTabWidget.addTab(upperPlot, f"Tab {tab_idx + 1}")
+                self.load_plot("upper", tab_idx)
+            bottomPlotCount = self.project.analyzers[analyzer].ui_elements_config["bottom_plot_count"]
+            for tab_idx in range(bottomPlotCount):
+                bottomPlot = self.project.analyzers[analyzer].ui_elements_config["bottom_tabs"][f"tab_{tab_idx}"]
+                self.bottomPlotTabWidget.addTab(bottomPlot, f"Tab {tab_idx + 1}")
+                self.load_plot("bottom", tab_idx)
 
 
     def clear_figure(self, place):
@@ -443,10 +447,11 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
             self.bottomPlotTabWidget.clear()
 
         analyzer = self.get_current_analyzer()
-        self.project.analyzers[analyzer].ui_elements_config[f"{place}_plot_count"] = 0
-        self.project.analyzers[analyzer].ui_elements_config[f"{place}_tabs"] = {}
-        self.project.analyzers[analyzer].ui_elements_config[f"{place}_figures"] = []
-        self.project.analyzers[analyzer].ui_elements_config[f"{place}_checkboxes"] = []
+        if analyzer != "":
+            self.project.analyzers[analyzer].ui_elements_config[f"{place}_plot_count"] = 0
+            self.project.analyzers[analyzer].ui_elements_config[f"{place}_tabs"] = {}
+            self.project.analyzers[analyzer].ui_elements_config[f"{place}_figures"] = []
+            self.project.analyzers[analyzer].ui_elements_config[f"{place}_checkboxes"] = []
 
 
     def show_create_figure_dialog(self):
@@ -455,8 +460,8 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
         """
         sender_button = self.sender()
         if self.listWidget.count() == 0:
-            self.qt_dialog = ErrorDialog(["<font color='red'>-ERROR: There is no successfully ran analyzer.</font>"])
-            self.qt_dialog.exec()
+            self.qt_dialog = ErrorDialog(["<font color='red'>ERROR: Figure creation is not possible because there is no successfully ran analyzer.</font>"])
+            self.qt_dialog.show()
             return
         else:
             if sender_button == self.upper_new_plot_button:
@@ -715,7 +720,10 @@ class MainApp(main.Ui_MainWindow, QtWidgets.QMainWindow):
     """
 
     def get_current_analyzer(self):
-        return str(self.listWidget.currentItem().text())
+        if self.listWidget.count() > 0:
+            return str(self.listWidget.currentItem().text())
+        else:
+            return ""
 
 
     def upper_tab_changed(self, index):
@@ -754,10 +762,8 @@ def apply_stylesheet(app):
         return
     style_file = QtCore.QFile(qss_path)
     if not style_file.exists():
-        print("Stylesheet file does not exist:", qss_path)
         return
     if style_file.open(QtCore.QFile.ReadOnly | QtCore.QFile.Text):
-        print("stylesheet is open and used")
         stream = QtCore.QTextStream(style_file)
         app.setStyleSheet(stream.readAll())
         style_file.close()

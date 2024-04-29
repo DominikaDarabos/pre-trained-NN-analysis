@@ -12,35 +12,35 @@ Tests are only for functions which do not utilize plot creation.
 """
 
 
-
-@pytest.fixture
-def figure():
-    return Figure_()
-
-def test_add_default_comparison(figure):
+def test_add_default_comparison():
+    figure = Figure_()
     figure.add_default_comparison()
     assert "comparison" in figure.config["plot_type"]
     assert "random_count" in figure.config["plot_type"]["comparison"]
     assert "channels" in figure.config["plot_type"]["comparison"]
 
-def test_add_default_distribution(figure):
+def test_add_default_distribution():
+    figure = Figure_()
     figure.add_default_distribution()
     assert "distribution" in figure.config["plot_type"]
     assert "box_plot" in figure.config["plot_type"]["distribution"]
     assert "histogram" in figure.config["plot_type"]["distribution"]
 
-def test_is_comparison(figure):
+def test_is_comparison():
+    figure = Figure_()
     assert not figure.is_comparison()
     figure.add_default_comparison()
     assert figure.is_comparison()
 
-def test_is_hist_distribution(figure):
+def test_is_hist_distribution():
+    figure = Figure_()
     assert not figure.is_hist_distribution()
     figure.add_default_distribution()
     figure.config["plot_type"]["distribution"]["histogram"]["activated"] = True
     assert figure.is_hist_distribution()
 
-def test_is_box_distribution(figure):
+def test_is_box_distribution():
+    figure = Figure_()
     assert not figure.is_box_distribution()
     figure.add_default_distribution()
     figure.config["plot_type"]["distribution"]["box_plot"]["activated"] = True
@@ -51,7 +51,8 @@ def test_normalize():
     normalized_data = Figure_().normalize(data, 0, 1)
     assert np.allclose(normalized_data, np.array([0, 0.25, 0.5, 0.75, 1]))
 
-def test_upsample(figure):
+def test_upsample():
+    figure = Figure_()
     data = np.array([1, 2, 3])
     expected_output = np.array([1, 1.5, 2, 2.5, 3])
     np.testing.assert_array_almost_equal(figure.upsample(data, 2), expected_output)

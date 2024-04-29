@@ -1,12 +1,12 @@
 import sys
 import os
 import pytest
-from PySide6.QtWidgets import QListWidget
-
+from PySide6.QtWidgets import QDialog
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from NewModelDialog import NewModelDialog
 from Project import Project
-from Analyzer import Analyzer
+from Analyzer import IG_Analyzer
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 """
 GUI tests for NewModelDialog.
@@ -16,12 +16,12 @@ Used original classes:
     - Analyzer
 """
 
-class mainMock():
+class mainMock(QDialog):
     def __init__(self):
+        super().__init__()
         self.project = Project()
         self.project.number_of_classes = 3
-        self.project.analyzers["IG"] = Analyzer()
-        self.listWidget = QListWidget()
+        self.project.analyzers["IG"] = IG_Analyzer(reference_input=0, steps=64)
     
     def get_current_analyzer(self):
         return "IG"
@@ -61,7 +61,15 @@ def test_collect_selected_analyzers_IG(add_dialog):
     add_dialog.collect_selected_analyzers()
     assert len(add_dialog.errorLog) == 1
     assert len(add_dialog.project.analyzers) == 0
-    assert "<font color='red'>Integrated gradient's reference and step value have to be numbers.</font>" in add_dialog.errorLog
+
+    add_dialog.errorLog = []
+    add_dialog.checkBox_IG.setChecked(True)
+    add_dialog.referenceLine.setText("0")
+    add_dialog.stepLine.setText("64")
+    add_dialog.comboBox_IG.setCurrentIndex(1)
+    add_dialog.collect_selected_analyzers()
+    assert len(add_dialog.errorLog) == 0
+    assert len(add_dialog.project.analyzers) == 1
 
 def test_collect_selected_analyzers_LRP_Z(add_dialog):
     add_dialog.errorLog = []
@@ -98,6 +106,13 @@ def test_collect_selected_analyzers_LRP_AB(add_dialog):
     assert "LRP_AB - None - 1 - 0" in add_dialog.project.analyzers
 
 def test_collect_selected_analyzers_LRP_eps(add_dialog):
+    add_dialog.errorLog = []
+    add_dialog.checkBox_LRP_Epsilon.setChecked(True)
+    add_dialog.EpsilonInput.setText("0,1")
+    add_dialog.collect_selected_analyzers()
+    assert len(add_dialog.errorLog) == 1
+    assert len(add_dialog.project.analyzers) == 0
+
     add_dialog.errorLog = []
     add_dialog.checkBox_LRP_Epsilon.setChecked(True)
     add_dialog.EpsilonInput.setText("0.1")

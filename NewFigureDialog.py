@@ -120,7 +120,7 @@ class NewFigureDialog(QtWidgets.QDialog, create_new_figure.Ui_Dialog):
                     if self.showAllInputRadio.isChecked():
                         figure.config["channels"] = range(self.app.project.number_of_classes)
                 else:
-                    self.errorLog.append("<font color='red'>Either analyzer or input should be selected under histogram plot.</font>")
+                    self.errorLog.append("<font color='red'>Either relevance score or input should be selected under histogram plot.</font>")
             else:
                 self.errorLog.append("<font color='red'>Either boxplot or histogram plot should be selected for distribution plot.</font>")
         if len(self.errorLog) == 0:

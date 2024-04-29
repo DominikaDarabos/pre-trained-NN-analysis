@@ -31,16 +31,16 @@ class IG_Analyzer(Analyzer):
         self.steps = steps
 
 class LRP_AB_Analyzer(Analyzer):
-    def __init__(self, alpha, beta):
-        super().__init__()
+    def __init__(self, alpha, beta, neuron = None):
+        super().__init__(neuron)
         self.alpha = alpha
         self.beta = beta
 
 class LRP_E_Analyzer(Analyzer):
-    def __init__(self, epsilon):
-        super().__init__()
+    def __init__(self, epsilon, neuron = None):
+        super().__init__(neuron)
         self.epsilon = epsilon
 
 class LRP_Z_Analyzer(Analyzer):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, neuron = None):
+        super().__init__(neuron)

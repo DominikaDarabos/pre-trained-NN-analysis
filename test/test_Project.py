@@ -65,7 +65,8 @@ labels_three_elements = np.array([
 ])
 
 
-def test_convert_prediction_to_labels(project):
+def test_convert_prediction_to_labels():
+    project = Project()
     project.predictions = predictions_three_elements
     expected_output = np.array([
         [1., 0., 0.],
@@ -81,7 +82,8 @@ def test_convert_prediction_to_labels(project):
     ])
     assert np.array_equal(project.convert_prediction_to_labels(), expected_output)
 
-def test_get_predicted_classes(project):
+def test_get_predicted_classes():
+    project = Project()
     project.predictions = predictions_two_elements
     expected_result = np.array([0, 1, 1, 1, 1, 0, 0, 0, 0, 1])
     assert np.array_equal(project.get_predicted_classes(), expected_result)
@@ -91,7 +93,8 @@ def test_get_predicted_classes(project):
     assert np.array_equal(project.get_predicted_classes(), expected_result)
 
 
-def test_get_truth_classes(project):
+def test_get_truth_classes():
+    project = Project()
     project.test_y = labels_two_elements
     expected_output = np.array([0,1,0,1,1,0,0,1,1,0])
     assert np.array_equal(project.get_truth_classes(), expected_output)
@@ -100,7 +103,8 @@ def test_get_truth_classes(project):
     expected_output = np.array([0,1,2,0,2,2,1,2,0,1])
     assert np.array_equal(project.get_truth_classes(), expected_output)
 
-def test_get_truth_class_indices(project):
+def test_get_truth_class_indices():
+    project = Project()
     project.test_y = labels_two_elements
     expected_output = np.array([0,2,5,6,9])
     assert np.array_equal(project.get_truth_class_indices(0), expected_output)
@@ -116,7 +120,8 @@ def test_get_truth_class_indices(project):
     assert np.array_equal(project.get_truth_class_indices(2), expected_output)
 
 
-def test_get_pred_class_indices(project):
+def test_get_pred_class_indices():
+    project = Project()
     project.predictions = predictions_two_elements
     expected_output = np.array([0,5,6,7,8])
     assert np.array_equal(project.get_pred_class_indices(0), expected_output)
@@ -131,7 +136,8 @@ def test_get_pred_class_indices(project):
     expected_output = np.array([4,5])
     assert np.array_equal(project.get_pred_class_indices(2), expected_output)
 
-def test_get_correct_prediction_indices(project):
+def test_get_correct_prediction_indices():
+    project = Project()
     project.predictions = predictions_two_elements
     project.test_y = labels_two_elements
     expected_output = np.array([0,1,3,4,5,6])
@@ -142,7 +148,8 @@ def test_get_correct_prediction_indices(project):
     expected_output = np.array([0,1,4,5,8,9])
     assert np.array_equal(project.get_correct_prediction_indices(), expected_output)
 
-def test_get_correct_pred_indices_for_class(project):
+def test_get_correct_pred_indices_for_class():
+    project = Project()
     project.predictions = predictions_two_elements
     project.test_y = labels_two_elements
     expected_output = np.array([0,1,3,4,5,6])
@@ -159,7 +166,8 @@ def test_get_correct_pred_indices_for_class(project):
     expected_output = np.array([0,1,3,4,5,6,8,9])
     assert np.array_equal(project.get_correct_pred_indices_for_class(2), expected_output)
 
-def test_get_incorrect_prediction_indices(project):
+def test_get_incorrect_prediction_indices():
+    project = Project()
     project.predictions = predictions_two_elements
     project.test_y = labels_two_elements
     expected_output = np.array([2,7,8,9])
@@ -170,7 +178,8 @@ def test_get_incorrect_prediction_indices(project):
     expected_output = np.array([2,3,6,7])
     assert np.array_equal(project.get_incorrect_prediction_indices(), expected_output)
 
-def test_get_correct_pos_prediction_indices_for_class(project):
+def test_get_correct_pos_prediction_indices_for_class():
+    project = Project()
     project.predictions = predictions_two_elements
     project.test_y = labels_two_elements
     expected_output = np.array([0,5,6])
@@ -187,7 +196,8 @@ def test_get_correct_pos_prediction_indices_for_class(project):
     expected_output = np.array([4,5])
     assert np.array_equal(project.get_correct_pos_prediction_indices_for_class(2), expected_output)
 
-def test_get_correct_neg_prediction_indices_for_class(project):
+def test_get_correct_neg_prediction_indices_for_class():
+    project = Project()
     project.predictions = predictions_two_elements
     project.test_y = labels_two_elements
     expected_output = np.array([1,3,4])
@@ -206,7 +216,8 @@ def test_get_correct_neg_prediction_indices_for_class(project):
     expected_output = np.array([0,1,3,6,8,9])
     assert np.array_equal(project.get_correct_neg_prediction_indices_for_class(2), expected_output)
 
-def test_get_false_positive_indices_for_class(project):
+def test_get_false_positive_indices_for_class():
+    project = Project()
     project.predictions = predictions_two_elements
     project.test_y = labels_two_elements
     expected_output = np.array([7,8])
@@ -223,7 +234,8 @@ def test_get_false_positive_indices_for_class(project):
     expected_output = np.array([])
     assert np.array_equal(project.get_false_positive_indices_for_class(2), expected_output)
 
-def test_get_false_negative_indices_for_class(project):
+def test_get_false_negative_indices_for_class():
+    project = Project()
     project.predictions = predictions_two_elements
     project.test_y = labels_two_elements
     expected_output = np.array([2,9])
@@ -240,7 +252,8 @@ def test_get_false_negative_indices_for_class(project):
     expected_output = np.array([2,7])
     assert np.array_equal(project.get_false_negative_indices_for_class(2), expected_output)
 
-def test_get_incorrect_prediction_indices_for_class(project):
+def test_get_incorrect_prediction_indices_for_class():
+    project = Project()
     project.predictions = predictions_two_elements
     project.test_y = labels_two_elements
     expected_output = np.array([2,7,8,9])

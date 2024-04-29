@@ -118,7 +118,7 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
                 self.project.analyzers[name] = IG_Analyzer(reference_input = ref, steps = step)
                 self.project.analyzers[name].activation = activations[self.comboBox_IG.currentText()]
             except:
-                self.errorLog.append("<font color='red'>Integrated gradient's reference and step value have to be numbers.</font>")
+                self.errorLog.append("<font color='red'>Integrated gradient's reference and step value must be numbers.</font>")
         if self.checkBox_LRP_Z.isChecked():
             name = f"LRP_Z - {self.comboBox_LRP_Z.currentText()}"
             if self.comboBox_LRP_Z.currentText().startswith("Index"):
@@ -182,13 +182,14 @@ class NewModelDialog(QtWidgets.QDialog, new_model.Ui_Dialog):
             try:
                 self.project.model = tf.keras.models.load_model(self.project.model_file_path, custom_objects=custom_objects)
                 self.project.model_wo_softmax = innvestigate.model_wo_softmax(self.project.model)
+                if self.project.test_x is not None:
+                    self.project.predictions = self.project.model.predict(self.project.test_x, verbose = 2)
+                else:
+                    self.errorLog.append("<font color='red'>Input file is not loaded.</font>")
             except Exception as err:
                 self.errorLog.append(f"<font color='red'>Error during loading model file: {err}</font>")
-
-        if self.project.test_x is not None:
-            self.project.predictions = self.project.model.predict(self.project.test_x, verbose = 2)
         else:
-            self.errorLog.append("<font color='red'>Input file is not loaded.</font>")
+            self.errorLog.append("<font color='red'>Model file does not exist.</font>")
     
     def load_data_file(self):
         """
